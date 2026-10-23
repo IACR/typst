@@ -8,12 +8,12 @@ yet. It is based on the LaTeX `iacrj.cls` along with the companion
 ## Package contents
 
 This package contains several files, including the `iacrj.typ` template,
-a sample starter file `example.typ`, and documentation.
+some documentation, and eventually a sample starter file.
 
 ## First steps
 
 If you are running typst locally on your own machine, then you will
-need to install the typst compiler and the "new computer modern"
+need to install the typst compiler and the "New Computer Modern"
 fonts. You can first check if the New Computer Modern fonts are
 installed by inspecting `typst fonts`. If you don't already have them
 installed, then you can download these from

@@ -176,6 +176,8 @@
     author: z.dictionary(
       (
         name: z.string(min: 1),
+        surname: z.string(min:1, optional: true),
+        footnote: z.string(min:1, optional:true),
         inst: z.array(z.integer(), optional: true, pre-transform: (self, it) => if type(it) == int { (it,) } else { it }),
         orcid: z.string(optional: true),
         email: z.string(optional: true),
