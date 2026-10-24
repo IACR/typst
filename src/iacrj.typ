@@ -21,6 +21,9 @@
       header-ascent: 31.5pt, // header baseline 28.5pt above the text block
       footer: none,
     ),
+    // Rule under the running head, across the text width (pages 2+).
+    // `gap` is the distance below the header baseline.
+    header-rule: (stroke: 0.4pt, gap: 5pt),
     // \documentclass[10pt]{article}: 10pt on 12pt
     text: (
       size: 10pt,
@@ -257,6 +260,13 @@
       h(1fr)
       short-title
     }
+    // The header ends at its baseline (text.bottom-edge is 0pt), so the rule
+    // is placed relative to that. The header is as wide as the text.
+    place(
+      bottom + left,
+      dy: config.header-rule.gap,
+      line(length: 100%, stroke: config.header-rule.stroke),
+    )
   }]
   
   
