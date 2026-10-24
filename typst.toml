@@ -1,0 +1,8 @@
+[package]
+name = "iacrj"
+version = "0.1.0"
+entrypoint = "src/iacrj.typ"
+authors = ["Kevin McCurley", "Emiel Wiedijk"]
+description = "Template for IACR journals, based on iacrj.cls and metacapture.sty."
+# TODO: choose a license (see TODO.md) before publishing.
+

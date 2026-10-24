@@ -352,21 +352,27 @@
   let tb = config.title-block
   let marks(it, raise) = super(..tb.marks, baseline: raise, it)
 
+  // With a single author or a single affiliation the numbers carry no
+  // information, so neither the authors nor the affiliations get them.
+  let show-inst = args.authors.len() > 1 and args.affiliations.len() > 1
+
   let author-names = args.authors.map(a => box({
     a.name
-    if a.inst != none { marks(a.inst.map(str).join(","), tb.authors.mark-raise) }
+    if show-inst and a.inst != none { marks(a.inst.map(str).join(","), tb.authors.mark-raise) }
     if a.footnote != none {
       // Author footnotes are lettered (a, b, ...) and placed like the
       // affiliation marks, so "1,a" reads as one superscript.
       set super(..tb.marks, baseline: tb.authors.mark-raise)
-      if a.inst != none { super[,] }
+      if show-inst and a.inst != none { super[,] }
       footnote(numbering: "a", a.footnote)
     }
     if a.orcid != none { [ #orcid(a.orcid)] }
   }))
   let affiliation-lines = args.affiliations.enumerate().map(((i, aff)) => {
-    marks(str(i + 1), tb.affiliations.mark-raise)
-    [~]
+    if show-inst {
+      marks(str(i + 1), tb.affiliations.mark-raise)
+      [~]
+    }
     (aff.department, aff.name, aff.city, aff.country).filter(x => x != none).join(", ")
   })
   let emails = args.authors.filter(a => a.email != none).map(a => a.email + " (" + a.name + ")")
