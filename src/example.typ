@@ -3,6 +3,7 @@
 #import "iacrj.typ": iacrj
 
 #show: iacrj.with(
+  journal: "cic",
   title: "Typst Template",
   authors: (
     (

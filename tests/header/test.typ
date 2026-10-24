@@ -4,6 +4,7 @@
 #import "/src/iacrj.typ": iacrj
 
 #show: iacrj.with(
+  journal: "cic",
   title: (full: "A Long Title for the Header Test", short: "Short Title"),
   authors: ("Alice", "Bob"),
 )

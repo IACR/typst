@@ -165,6 +165,7 @@
 }
 
 #let iacrj(
+  journal: none, // required: "cic", "tosc" or "tches"
   title: "",
   authors: (),
   affiliations: (),
@@ -201,6 +202,7 @@
   
   let args = z.parse(
     (
+      journal: journal,
       title: title,
       authors: authors,
       affiliations: affiliations,
@@ -208,6 +210,19 @@
       keywords: keywords,
     ),
     z.dictionary((
+      // The IACR journal: Communications in Cryptology (cic), Transactions
+      // on Symmetric Cryptology (tosc) or Transactions on Cryptographic
+      // Hardware and Embedded Systems (tches), like iacrj.cls's journal= option.
+      journal: z.choice(
+        ("cic", "tosc", "tches"),
+        pre-transform: (self, it) => {
+          assert(
+            it != none,
+            message: "iacrj: `journal` is required. Use \"cic\", \"tosc\" or \"tches\".",
+          )
+          it
+        },
+      ),
       // Either "Title" or (full: "Long Title", short: "Short Title").
       // The short title is used in the running head (\titlerunning).
       // A plain string is turned into (full: it, short: it) before validation.
@@ -352,6 +367,7 @@
 
     
   let meta = (
+    journal: args.journal,
     title: (full: full-title, short: short-title),
     authors: args.authors,
   )

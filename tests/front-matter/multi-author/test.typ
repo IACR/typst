@@ -4,6 +4,7 @@
 #import "/src/iacrj.typ": iacrj
 
 #show: iacrj.with(
+  journal: "cic",
   title: "Multi-Author Paper",
   authors: (
     (name: "Josiah Carberry", inst: 1, email: "josiah@carberry.org", orcid: "0000-0002-1825-0097", footnote: "Footnote for Josiah"),
