@@ -487,7 +487,9 @@
 
   let title-block = {
     set par(justify: false, first-line-indent: 0pt)
-    set block(spacing: 0pt) // all vertical space comes from the `gap` values
+    // Only the outer blocks use `gap` for spacing. A set rule here would
+    // also remove spacing around display equations inside the abstract.
+    let block = block.with(spacing: 0pt)
     align(center, {
       v(tb.title.gap)
       block({
