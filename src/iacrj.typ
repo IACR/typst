@@ -328,11 +328,11 @@
   show outline.entry: set text(fill: config.colors.link)
 
     
-  let metadata = (
+  let meta = (
     title: (full: full-title, short: short-title),
     authors: args.authors,
   )
-  let abstract = args.abstract.text
+  let abstract-text = args.abstract.text
 
 
   // TODO: review author block
@@ -419,7 +419,7 @@
     // bundle: the paper plus a metadata file
     // the metadata is not exactly yaml, should either build new encoder or change output format.
     document("main.pdf", doc)
-    asset("main.meta", yaml.encode(metadata))
-    asset("main.abstract", abstract)
+    asset("main.meta", yaml.encode(meta))
+    asset("main.abstract", abstract-text)
   }
 }
