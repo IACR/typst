@@ -334,7 +334,7 @@
         [ISSN~#journal.issn],
         if iacr.volume != none [Vol.~#iacr.volume],
         if iacr.number != none [No.~#iacr.number],
-        [#pages~pages.],
+        [#pages~#if pages == 1 [page.] else [pages.]],
       ).filter(x => x != none)
       move(dy: config.first-page-header.dy, {
         journal.name
