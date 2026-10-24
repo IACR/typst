@@ -126,7 +126,7 @@
   let total = id.slice(0, 15).clusters().map(int).fold(0, (acc, d) => (acc + d) * 2)
   let check = calc.rem(12 - calc.rem(total, 11), 11)
   let expected = if check == 10 { "X" } else { str(check) }
-  return id.last() == expected 
+  return id.last() == expected
 }
 
 /// ORCID iD icon linking to the author's ORCID record, like `\OrcidLink` in
@@ -214,9 +214,22 @@
       ),
       authors: z.array(parsing.author, min: 1),
       affiliations: z.array(parsing.affiliation),
+      // A string of Typst markup, usually `read("abstract.typ")`. It is
+      // rendered with eval, and the string itself goes into the metadata, so
+      // the metadata keeps the exact source (math included). Content is
+      // rejected because Typst cannot turn content back into source text.
+      // (content: .., text: ..) supplies both forms explicitly.
       abstract: z.dictionary(
         (content: z.content(), text: z.string()),
-        pre-transform: (self, it) => if type(it) == str { (content: [#it], text: it) } else { it },
+        pre-transform: (self, it) => {
+          assert(
+            type(it) != content,
+            message: "iacrj: `abstract` must be a string of Typst markup, not content, "
+              + "so its source can be saved in the metadata. "
+              + "Put it in a file and use `abstract: read(\"abstract.typ\")`.",
+          )
+          if type(it) == str { (content: eval(it, mode: "markup"), text: it) } else { it }
+        },
       ),
       keywords: z.array(z.string())
     )),

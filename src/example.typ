@@ -35,10 +35,7 @@
       country: "USA"
     )
   ),
-  abstract: "Let $||v||$ denote the length of a vector $ v $. This should
-  have been mathematics.
-
-This is a second paragraph but it feels clumsy to put it inside a function.",
+  abstract: read("abstract.typ"),
   enable-checks: true,
 )
 
