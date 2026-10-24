@@ -1,6 +1,6 @@
 // Argument validation of iacrj(). The template panics while parsing its
 // arguments, before any layout, so `catch` sees the message.
-#import "/src/iacrj.typ": iacrj
+#import "/src/iacrj.typ": iacrj, _parse-iacrmetadata
 
 #let error(..args) = catch(() => iacrj(..args)[Body])
 
@@ -26,3 +26,27 @@
 #iacrj(journal: "tosc", title: "T", authors: ("A",))[]
 #iacrj(journal: "tches", title: "T", authors: ("A",))[]
 #assert(error(journal: "eprint", title: "T", authors: ("A",)).contains("iacrj.journal"))
+
+// The version is one of preprint (the default), submission and final.
+#iacrj(journal: "cic", version: "submission", title: "T", authors: ("A",))[]
+#iacrj(journal: "cic", version: "final", title: "T", authors: ("A",))[]
+#assert(error(journal: "cic", version: "draft", title: "T", authors: ("A",)).contains("iacrj.version"))
+
+// A submission hides the authors unless notanonymous is set.
+#iacrj(journal: "cic", version: "submission", title: "T", authors: ("Alice",))[
+  #context assert.eq(document.author, ("hidden for submission",))
+]
+#iacrj(journal: "cic", version: "submission", notanonymous: true, title: "T", authors: ("Alice",))[
+  #context assert.eq(document.author, ("Alice",))
+]
+#assert(error(journal: "cic", notanonymous: "yes", title: "T", authors: ("A",)).contains("iacrj.notanonymous"))
+
+// Volume and number come from the publisher's iacrmetadata, never from the
+// document.
+#assert(error(journal: "cic", title: "T", authors: ("A",), volume: 5).contains("volume"))
+#assert(error(journal: "cic", title: "T", authors: ("A",), iacrmetadata: "volume=5").contains("publisher"))
+#assert.eq(_parse-iacrmetadata(""), (volume: none, number: none))
+#assert.eq(_parse-iacrmetadata("volume=5\nnumber=3\n"), (volume: 5, number: 3))
+#assert.eq(_parse-iacrmetadata(" volume = 5 \n\ndoi=10.62056/a1b2=c\n"), (volume: 5, number: none))
+#assert(catch(() => _parse-iacrmetadata("volume=five")).contains("whole number"))
+#assert(catch(() => _parse-iacrmetadata("volume 5")).contains("key=value"))

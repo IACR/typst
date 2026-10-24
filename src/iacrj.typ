@@ -21,6 +21,16 @@
       header-ascent: 31.5pt, // header baseline 28.5pt above the text block
       footer: none,
     ),
+    // Name and ISSN of each journal (\publname and \IACR@EISSN).
+    journals: (
+      cic: (name: "IACR Communications in Cryptology", issn: "3006-5496"),
+      tosc: (name: "IACR Transactions on Symmetric Cryptology", issn: "2519-173X"),
+      tches: (name: "IACR Transactions on Cryptographic Hardware and Embedded Systems", issn: "2569-2925"),
+    ),
+    // First-page header (fancypagestyle title): \small, 9pt on 11pt.
+    // Its two lines don't fit in \headheight (12pt), so fancyhdr enlarges it
+    // to 20.5pt, which moves the header 8.5pt down towards the text.
+    first-page-header: (text: (size: 9pt), leading: 4.7pt, dy: 8.5pt),
     // Rule under the running head, across the text width (pages 2+).
     // `gap` is the distance below the header baseline.
     header-rule: (stroke: 0.4pt, gap: 5pt),
@@ -164,8 +174,38 @@
   link("https://orcid.org/" + formatted, box(_orcid-icon))
 }
 
-#let iacrj(
+/// Parses the journal metadata that the publisher supplies for the final
+/// version (\jobname.iacrmetadata in iacrj.cls): one `key=value` per line,
+/// e.g. "volume=5\nnumber=3". Blank lines and unknown keys are ignored, so
+/// the publisher can add keys before the template uses them.
+#let _parse-iacrmetadata(text) = {
+  let values = (:)
+  for line in text.split("\n").map(str.trim).filter(line => line != "") {
+    let parts = line.split("=")
+    if parts.len() < 2 {
+      panic("iacrj: iacrmetadata line \"" + line + "\" is not of the form key=value.")
+    }
+    values.insert(parts.first().trim(), parts.slice(1).join("=").trim())
+  }
+
+  let integer(key) = {
+    let value = values.at(key, default: none)
+    if value == none { return none }
+    if value.match(regex("^\d+$")) == none {
+      panic("iacrj: iacrmetadata " + key + " must be a whole number, got \"" + value + "\".")
+    }
+    int(value)
+  }
+  (volume: integer("volume"), number: integer("number"))
+}
+
+// The template itself. `iacrmetadata` is the text of main.iacrmetadata;
+// authors use `iacrj` below, which takes it from the compiler instead.
+#let _iacrj(
+  iacrmetadata: "",
   journal: none, // required: "cic", "tosc" or "tches"
+  version: "preprint",
+  notanonymous: false,
   title: "",
   authors: (),
   affiliations: (),
@@ -203,6 +243,8 @@
   let args = z.parse(
     (
       journal: journal,
+      version: version,
+      notanonymous: notanonymous,
       title: title,
       authors: authors,
       affiliations: affiliations,
@@ -223,6 +265,11 @@
           it
         },
       ),
+      // iacrj.cls's version= option. Only the final version gets the
+      // journal header on the first page; a submission is anonymous.
+      version: z.choice(("preprint", "submission", "final")),
+      // iacrj.cls's notanonymous option: show the authors in a submission.
+      notanonymous: z.boolean(),
       // Either "Title" or (full: "Long Title", short: "Short Title").
       // The short title is used in the running head (\titlerunning).
       // A plain string is turned into (full: it, short: it) before validation.
@@ -249,23 +296,53 @@
           if type(it) == str { (content: eval(it, mode: "markup"), text: it) } else { it }
         },
       ),
-      keywords: z.array(z.string())
+      keywords: z.array(z.string()),
     )),
     scope: ("iacrj",),
     ctx: z.z-ctx(strict: true), // reject unknown keys, e.g. (full: .., shrot: ..)
   )
   
-  let (full: full-title, short: short-title) = args.title
-  let author-names = args.authors.map(a => a.name)
-  let author-running = author-names.join(", ")
+  // Volume and number for the first-page header (\IACR@vol, \IACR@no).
+  let iacr = _parse-iacrmetadata(iacrmetadata)
 
+  let (full: full-title, short: short-title) = args.title
   let config = config
-  config.document = (title: [#full-title], author: author-names)
+  let journal = config.journals.at(args.journal)
+
+  // A submission hides the authors and affiliations everywhere: title block,
+  // running head, PDF metadata and bundle metadata (iacrj.cls's anonymous mode).
+  let anonymous = args.version == "submission" and not args.notanonymous
+  let author-names = args.authors.map(a => a.name)
+  let author-running = if anonymous { "Anonymous Submission to " + journal.name } else { author-names.join(", ") }
+
+  config.document = (
+    title: [#full-title],
+    author: if anonymous { ("hidden for submission",) } else { author-names },
+  )
   // All `context` blocks compare equal, so a user's `context` header would
   // pass the check. The metadata marker makes the template's header unique.
   config.page.header = [#metadata("iacrj-header")#context {
     let n = counter(page).get().first()
-    if here().page() == 1 { return }
+    if here().page() == 1 {
+      if args.version != "final" { return }
+      // Journal name and issue on the left. The header ends at the baseline
+      // of its last line, like the running head.
+      set text(..config.first-page-header.text)
+      set par(leading: config.first-page-header.leading)
+      let pages = counter(page).final().first()
+      let issue = (
+        [ISSN~#journal.issn],
+        if iacr.volume != none [Vol.~#iacr.volume],
+        if iacr.number != none [No.~#iacr.number],
+        [#pages~pages.],
+      ).filter(x => x != none)
+      move(dy: config.first-page-header.dy, {
+        journal.name
+        linebreak()
+        issue.join[, ]
+      })
+      return
+    }
     if calc.odd(n) {
       author-running
       h(1fr)
@@ -368,8 +445,11 @@
     
   let meta = (
     journal: args.journal,
+    version: args.version,
+    volume: iacr.volume,
+    number: iacr.number,
     title: (full: full-title, short: short-title),
-    authors: args.authors,
+    authors: if anonymous { () } else { args.authors },
   )
   let abstract-text = args.abstract.text
 
@@ -382,7 +462,7 @@
   // information, so neither the authors nor the affiliations get them.
   let show-inst = args.authors.len() > 1 and args.affiliations.len() > 1
 
-  let author-names = args.authors.map(a => box({
+  let author-names = if anonymous { ([Anonymous Submission],) } else { args.authors.map(a => box({
     a.name
     if show-inst and a.inst != none { marks(a.inst.map(str).join(","), tb.authors.mark-raise) }
     if a.footnote != none {
@@ -393,15 +473,17 @@
       footnote(numbering: "a", a.footnote)
     }
     if a.orcid != none { [ #orcid(a.orcid)] }
-  }))
-  let affiliation-lines = args.affiliations.enumerate().map(((i, aff)) => {
+  })) }
+  let affiliation-lines = if anonymous { () } else { args.affiliations.enumerate().map(((i, aff)) => {
     if show-inst {
       marks(str(i + 1), tb.affiliations.mark-raise)
       [~]
     }
     (aff.department, aff.name, aff.city, aff.country).filter(x => x != none).join(", ")
-  })
-  let emails = args.authors.filter(a => a.email != none).map(a => a.email + " (" + a.name + ")")
+  }) }
+  let emails = if anonymous { () } else {
+    args.authors.filter(a => a.email != none).map(a => a.email + " (" + a.name + ")")
+  }
 
   let title-block = {
     set par(justify: false, first-line-indent: 0pt)
@@ -477,4 +559,19 @@
     asset("main.meta", yaml.encode(meta))
     asset("main.abstract", abstract-text)
   }
+}
+
+/// The iacrj template. The publisher supplies the journal metadata (volume,
+/// number) for the final version on the command line, like the
+/// \jobname.iacrmetadata file that iacrj.cls reads:
+///
+///   typst compile --input iacrmetadata="$(cat main.iacrmetadata)" main.typ
+///
+/// Authors cannot set these values in the document.
+#let iacrj(..args) = {
+  assert(
+    "iacrmetadata" not in args.named(),
+    message: "iacrj: the journal metadata is supplied by the publisher, not the document.",
+  )
+  _iacrj(iacrmetadata: sys.inputs.at("iacrmetadata", default: ""), ..args)
 }

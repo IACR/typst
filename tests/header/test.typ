@@ -1,6 +1,6 @@
-// Running heads: none on page 1; from page 2 on, the authors (odd pages) or
-// the short title (even pages) with the page number, above a rule across the
-// text width.
+// Running heads: on page 1 none (the journal header is only on the final
+// version, see first-page-header); from page 2 on, the authors (odd pages) or
+// the short title (even pages) with the page number, above a rule.
 #import "/src/iacrj.typ": iacrj
 
 #show: iacrj.with(
