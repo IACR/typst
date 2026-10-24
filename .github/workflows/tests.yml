@@ -13,7 +13,7 @@ jobs:
       # tytanic 0.4.1 is built with Typst 0.15.1 (see README.md).
       TYTANIC_VERSION: 0.4.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install tytanic
         run: |
