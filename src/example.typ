@@ -43,7 +43,7 @@
 
 #heading("Introduction", numbering: none)
 
-This is a sample document showing the Typst port of the iacrj template. It sets styling and gives the author a warning when changed, see @illegal for examples.
+This is a sample document showing the Typst port of the iacrj template.#footnote[A body footnote.] It sets styling and gives the author a warning when changed, see @illegal for examples.
 
 #{
   for i in ("Technical overview", "Preliminaries", "Lower bounds") {

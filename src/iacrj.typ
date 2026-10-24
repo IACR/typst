@@ -355,6 +355,13 @@
   let author-names = args.authors.map(a => box({
     a.name
     if a.inst != none { marks(a.inst.map(str).join(","), tb.authors.mark-raise) }
+    if a.footnote != none {
+      // Author footnotes are lettered (a, b, ...) and placed like the
+      // affiliation marks, so "1,a" reads as one superscript.
+      set super(..tb.marks, baseline: tb.authors.mark-raise)
+      if a.inst != none { super[,] }
+      footnote(numbering: "a", a.footnote)
+    }
     if a.orcid != none { [ #orcid(a.orcid)] }
   }))
   let affiliation-lines = args.affiliations.enumerate().map(((i, aff)) => {
@@ -371,6 +378,13 @@
       v(tb.title.gap)
       block({
         set par(leading: tb.title.leading)
+        // The emails footnote has no marker. Footnotes are listed in document
+        // order, so placing it at the title puts it before the author footnotes.
+        if emails.len() > 0 {
+          let label = if emails.len() == 1 { "Email: " } else { "Emails: " }
+          footnote(numbering: n => none, label + emails.join(", "))
+          counter(footnote).update(0) // so author footnotes start at a
+        }
         text(..tb.title.text, full-title)
       })
       v(tb.authors.gap)
@@ -403,12 +417,8 @@
       v(tb.keywords.gap)
       block[#text(..tb.keywords.label)[Keywords:]~#args.keywords.join(", ")]
     }
-    if emails.len() > 0 {
-      // The emails footnote has no marker and doesn't count as footnote 1.
-      let label = if emails.len() == 1 { "Email: " } else { "Emails: " }
-      footnote(numbering: n => none, label + emails.join(", "))
-      counter(footnote).update(n => n - 1)
-    }
+    // Author and email footnotes don't count: the paper's first footnote is 1.
+    counter(footnote).update(0)
   }
 
   
