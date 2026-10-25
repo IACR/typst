@@ -11,27 +11,31 @@
       email: "josiah@carberry.org",
       orcid: "0000-0002-1825-0097",
       footnote: "This is a footnote for Josiah",
-      inst: 1,
+      inst: "uni-a",
     ),
     (
       name: "Truman Grayson",
-      inst: (1, 2),
+      inst: ("uni-a", "uni-b"),
     ),
     (
       name: "F.D.C. Willard",
       surname: "Willard",
       footnote: "Deceased 1982",
-      inst: 2,
+      inst: "uni-b",
     ),
   ),
   affiliations: (
-    (
+    uni-a: (
       name: "University of Second Choice",
       department: "Department of Redundancy Department",
       city: "Hogsmeade",
       country: "Elbonia",
     ),
-    (name: "Vermont State University", city: "Castleton", country: "USA"),
+    uni-b: (
+      name: "Vermont State University",
+      city: "Castleton",
+      country: "USA",
+    ),
   ),
   abstract: read("abstract.typ"),
   enable-checks: true,

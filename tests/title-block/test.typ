@@ -7,16 +7,32 @@
 #let authors = (
   (
     name: "Alice",
-    inst: (1,),
+    inst: ("uni-a",),
     email: "alice@example.org",
     footnote: "Author note.",
     orcid: "0000-0002-1825-0097",
   ),
-  (name: "Bob", inst: (2,), email: none, footnote: none, orcid: none),
+  (
+    name: "Bob",
+    inst: ("uni-b",),
+    email: none,
+    footnote: none,
+    orcid: none,
+  ),
 )
 #let affiliations = (
-  (name: "University A", department: none, city: "City A", country: none),
-  (name: "University B", department: none, city: "City B", country: none),
+  uni-a: (
+    name: "University A",
+    department: none,
+    city: "City A",
+    country: none,
+  ),
+  uni-b: (
+    name: "University B",
+    department: none,
+    city: "City B",
+    country: none,
+  ),
 )
 
 #title-block(

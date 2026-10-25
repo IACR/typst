@@ -5,8 +5,17 @@
 #show: iacrj.with(
   journal: "cic",
   title: "Single Author",
-  authors: ((name: "Alice", inst: (1, 2), footnote: "A footnote for Alice"),),
-  affiliations: ("University of Second Choice", "Vermont State University"),
+  authors: (
+    (
+      name: "Alice",
+      inst: ("uni-a", "uni-b"),
+      footnote: "A footnote for Alice",
+    ),
+  ),
+  affiliations: (
+    uni-a: "University of Second Choice",
+    uni-b: "Vermont State University",
+  ),
 )
 
 Body.

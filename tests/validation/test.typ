@@ -1,14 +1,65 @@
 // Argument validation of iacrj(). The template panics while parsing its
 // arguments, before any layout, so `catch` sees the message.
-#import "/src/iacrj.typ": _parse-iacrmetadata, iacrj
+#import "/src/iacrj.typ": _parse-iacrmetadata, affiliation-marker, iacrj
 
 #let error(..args) = catch(() => iacrj(..args)[Body])
+#assert(catch(() => affiliation-marker("2")).contains("expected an integer"))
 
 // Valid minimal calls.
 #iacrj(journal: "cic", title: "T", authors: ("A",))[]
-#iacrj(journal: "cic", title: (full: "Long Title", short: "Short"), authors: (
-  (name: "A", inst: (1, 2)),
-))[]
+#iacrj(
+  journal: "cic",
+  title: (full: "Long Title", short: "Short"),
+  authors: ((name: "A", inst: ("uni-a", "uni-b")),),
+  affiliations: (
+    uni-a: (name: "University A"),
+    uni-b: "University B",
+  ),
+)[]
+
+// Legacy positional affiliations and numeric references are rejected.
+#for affiliations in (("University A",), (uni-a: 1)) {
+  assert(
+    error(
+      journal: "cic",
+      title: "T",
+      authors: ("A",),
+      affiliations: affiliations,
+    ).contains("iacrj.affiliations"),
+  )
+}
+#for inst in (1, (1,), ("uni-a", 2)) {
+  assert(
+    error(
+      journal: "cic",
+      title: "T",
+      authors: ((name: "A", inst: inst),),
+      affiliations: (uni-a: "University A"),
+    ).contains("iacrj.authors"),
+  )
+}
+
+// References must exist even with a single author/affiliation or anonymity.
+#for version in ("preprint", "submission") {
+  for inst in ("missing", ("uni-a", "missing")) {
+    assert(
+      error(
+        journal: "cic",
+        version: version,
+        title: "T",
+        authors: ((name: "A", inst: inst),),
+        affiliations: (uni-a: "University A"),
+      ).contains("unknown affiliation key"),
+    )
+  }
+}
+#assert(
+  error(
+    journal: "cic",
+    title: "T",
+    authors: ((name: "A", inst: "uni-a"),),
+  ).contains("unknown affiliation key"),
+)
 
 // At least one author is required.
 #assert(

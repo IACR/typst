@@ -13,7 +13,7 @@
       footnote: "An author note.",
     ),
   ),
-  affiliations: ("University A",),
+  affiliations: (uni-a: "University A"),
   abstract: "An abstract with semantic structure.",
   keywords: ("accessibility", "cryptography"),
 )

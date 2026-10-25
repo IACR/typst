@@ -10,14 +10,14 @@
   authors: (
     (
       name: "Alice",
-      inst: 1,
+      inst: "uni-a",
       email: "alice@example.org",
       orcid: "0000-0002-1825-0097",
       footnote: "A footnote",
     ),
-    (name: "Bob", inst: 2),
+    (name: "Bob", inst: "uni-b"),
   ),
-  affiliations: ("University A", "University B"),
+  affiliations: (uni-a: "University A", uni-b: "University B"),
 )
 
 #context assert.eq(document.author, ("hidden for submission",))

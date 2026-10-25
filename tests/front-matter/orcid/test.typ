@@ -7,16 +7,16 @@
   title: "ORCID in Front Matter",
   authors: (
     (name: "Alice", orcid: "0000-0002-1825-0097"),
-    (name: "Bob", inst: 1, orcid: "0000-0002-9079-593X"),
+    (name: "Bob", inst: "uni-a", orcid: "0000-0002-9079-593X"),
     (
       name: "Carol",
-      inst: 2,
+      inst: "uni-b",
       orcid: "0000-0003-1010-8157",
       footnote: "An author note for Carol.",
     ),
-    (name: "Dave", inst: 2),
+    (name: "Dave", inst: "uni-b"),
   ),
-  affiliations: ("University A", "University B"),
+  affiliations: (uni-a: "University A", uni-b: "University B"),
 )
 
 #context {

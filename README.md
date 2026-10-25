@@ -27,6 +27,37 @@ pushd ~/.local/share/fonts/NewComputerModern
 unzip ~/Downloads/newcomputermodern.zip
 ```
 
+## Authors and affiliations
+
+Affiliations are an ordered dictionary with short keys. Authors refer to these
+keys using `inst`, either as a single string or a tuple of strings:
+
+```typ
+#show: iacrj.with(
+  journal: "cic",
+  title: "Example paper",
+  authors: (
+    (name: "Alice", inst: "uni-a"),
+    (name: "Bob", inst: ("uni-a", "uni-b")),
+  ),
+  affiliations: (
+    uni-a: (name: "University A", city: "City A"),
+    uni-b: (name: "University B"),
+  ),
+)
+```
+
+The keys are not printed. Dictionary insertion order determines both the
+superscript numbers and the order of displayed affiliations; changing that order
+automatically updates the numbers without changing author references. Author-side
+numbers link to their corresponding affiliation entries. As before, numbers are
+omitted with a single author or a single affiliation.
+
+A string value such as `uni-a: "University A"` is shorthand for a record with
+only a `name`. Every referenced key must exist. Affiliation arrays and numeric
+`inst` references are no longer accepted. Anonymous submissions omit authors
+and affiliations from both the front matter and bundle metadata.
+
 ## Final-version DOI and update badge
 
 The publisher supplies publication links through the `iacrmetadata` input,

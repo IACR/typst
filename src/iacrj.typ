@@ -457,21 +457,45 @@
   }
 }
 
+/// Style an integer affiliation number as a superscript.
+#let affiliation-marker(
+  number,
+  baseline: config.title-block.authors.mark-raise,
+) = {
+  assert(
+    type(number) == int,
+    message: "affiliation-marker: expected an integer.",
+  )
+  super(..config.title-block.marks, baseline: baseline, str(number))
+}
+
+/// Link an author-side marker to an affiliation key, displaying its number.
+#let affiliation-reference(key, number) = {
+  let target = label("iacrj-affiliation-" + key)
+  link(target, affiliation-marker(number))
+}
+
 /// Render the title, authors, affiliations, abstract and keywords.
-/// Authors and affiliations are the normalized metadata dictionaries used by
-/// `iacrj`; the abstract is rendered content, or `none` to omit it.
+/// Authors use normalized metadata records with affiliation keys in `inst`.
+/// Affiliations are a dictionary whose insertion order sets the displayed numbers.
+/// The abstract is rendered content, or `none` to omit it.
 /// An empty author list renders an anonymous submission and hides affiliations.
 /// This function inherits document-wide styling from its caller.
 #let title-block(
   title: "",
   authors: (),
-  affiliations: (),
+  affiliations: (:),
   abstract: none,
   keywords: (),
 ) = {
   let anonymous = authors.len() == 0
   let tb = config.title-block
-  let marks(it, raise) = super(..tb.marks, baseline: raise, it)
+  // Dictionary insertion order determines both numbering and display order.
+  let affiliation-numbers = affiliations
+    .keys()
+    .enumerate()
+    .map(((i, key)) => (key, i + 1))
+    .to-dict()
 
   // With a single author or a single affiliation the numbers carry no
   // information, so neither the authors nor the affiliations get them.
@@ -481,7 +505,12 @@
     authors.map(a => box({
       a.name
       if show-inst and a.inst != none {
-        marks(a.inst.map(str).join(","), tb.authors.mark-raise)
+        a
+          .inst
+          .map(key => affiliation-reference(key, affiliation-numbers.at(key)))
+          .join(
+            super(..tb.marks, baseline: tb.authors.mark-raise, [,]),
+          )
       }
       if a.footnote != none {
         // Author footnotes are lettered (a, b, ...) and placed like the
@@ -495,10 +524,15 @@
   }
   let affiliation-lines = if anonymous { () } else {
     affiliations
+      .pairs()
       .enumerate()
-      .map(((i, aff)) => {
+      .map(((i, entry)) => {
+        let (key, aff) = entry
         if show-inst {
-          marks(str(i + 1), tb.affiliations.mark-raise)
+          [#affiliation-marker(
+              i + 1,
+              baseline: tb.affiliations.mark-raise,
+            )#label("iacrj-affiliation-" + key)]
           [~]
         }
         (aff.department, aff.name, aff.city, aff.country)
@@ -581,7 +615,7 @@
   notanonymous: false,
   title: "",
   authors: (),
-  affiliations: (),
+  affiliations: (:),
   abstract: "",
   keywords: (),
   enable-checks: true,
@@ -589,16 +623,16 @@
 ) = {
   let from-string = (self, it) => if type(it) == str { (name: it) } else { it }
   let parsing = (
-    // \addauthor: (name: .., inst: 1 or (1, 2), orcid: .., email: ..)
+    // Authors refer to affiliation keys: inst: "rub" or ("rub", "other").
     author: z.dictionary(
       (
         name: z.string(min: 1),
         surname: z.string(min: 1, optional: true),
         footnote: z.string(min: 1, optional: true),
-        inst: z.array(z.integer(), optional: true, pre-transform: (
+        inst: z.array(z.string(min: 1), optional: true, pre-transform: (
           self,
           it,
-        ) => if type(it) == int { (it,) } else { it }),
+        ) => if type(it) == str { (it,) } else { it }),
         orcid: z.string(optional: true),
         email: z.string(optional: true),
       ),
@@ -615,6 +649,11 @@
       pre-transform: from-string,
     ),
   )
+
+  // Validate each keyed record without changing the dictionary's insertion order.
+  let affiliation-schema = if type(affiliations) == dictionary {
+    affiliations.keys().map(key => (key, parsing.affiliation)).to-dict()
+  } else { (:) }
 
   let args = z.parse(
     (
@@ -656,7 +695,7 @@
         } else { it },
       ),
       authors: z.array(parsing.author, min: 1),
-      affiliations: z.array(parsing.affiliation),
+      affiliations: z.dictionary(affiliation-schema),
       // A string of Typst markup, usually `read("abstract.typ")`. It is
       // rendered with eval, and the string itself goes into the metadata, so
       // the metadata keeps the exact source (math included). Content is
@@ -681,6 +720,19 @@
     scope: ("iacrj",),
     ctx: z.z-ctx(strict: true), // reject unknown keys, e.g. (full: .., shrot: ..)
   )
+
+  for author in args.authors {
+    for key in author.inst {
+      assert(
+        key in args.affiliations,
+        message: "iacrj: unknown affiliation key "
+          + repr(key)
+          + " for author "
+          + repr(author.name)
+          + ".",
+      )
+    }
+  }
 
   // Volume and number for the first-page header (\IACR@vol, \IACR@no).
   let iacr = _parse-iacrmetadata(iacrmetadata)
@@ -816,6 +868,7 @@
     number: iacr.number,
     title: (full: full-title, short: short-title),
     authors: if anonymous { () } else { args.authors },
+    affiliations: if anonymous { (:) } else { args.affiliations },
   )
   if args.version == "final" {
     meta.doi = iacr.doi
@@ -829,7 +882,7 @@
   let front-matter = title-block(
     title: full-title,
     authors: if anonymous { () } else { args.authors },
-    affiliations: if anonymous { () } else { args.affiliations },
+    affiliations: if anonymous { (:) } else { args.affiliations },
     abstract: if args.abstract.text != "" { args.abstract.content },
     keywords: args.keywords,
   )

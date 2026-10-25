@@ -4,7 +4,7 @@
 #let author = (
   name: "PRIVATE Alice",
   surname: "PRIVATE Surname",
-  inst: (1,),
+  inst: ("uni-a",),
   email: "PRIVATE@example.org",
   orcid: "0000-0002-1825-0097",
   footnote: "PRIVATE author note",
@@ -26,7 +26,8 @@
   Anonymous body.
 ]
 
-#let original = submission((author,), (affiliation,))
+#let affiliations = (uni-a: affiliation)
+#let original = submission((author,), affiliations)
 
 // Content equality is not a complete leak check: context blocks compare equal
 // even when they capture different metadata, so they might bypass this check.
@@ -39,12 +40,17 @@
 #for change in (
   (name: "PRIVATE Bob"),
   (surname: "PRIVATE Other Surname"),
-  (inst: (2,)),
+  (inst: ("uni-b",)),
   (email: "PRIVATE-other@example.org"),
   (orcid: "0000-0002-9079-593X"),
   (footnote: "PRIVATE other author note"),
 ) {
-  let changed = submission((author + change,), (affiliation,))
+  let changed-affiliations = affiliations
+  if "inst" in change {
+    let value = changed-affiliations.remove("uni-a")
+    changed-affiliations.insert(change.inst.first(), value)
+  }
+  let changed = submission((author + change,), changed-affiliations)
   assert.eq(changed, original)
   changed
 }
@@ -57,7 +63,7 @@
   (city: "PRIVATE Other City"),
   (country: "PRIVATE Other Country"),
 ) {
-  let affiliations = (affiliation + change,)
+  let affiliations = (uni-a: affiliation + change)
   let changed = submission((author,), affiliations)
   assert.eq(changed, original)
   // The public renderer must ignore affiliations even if supplied directly.
@@ -73,7 +79,10 @@
 }
 
 // Changing the number of authors or affiliations must not affect the output.
-#let multiple = submission((author, author), (affiliation, affiliation))
+#let multiple = submission(
+  (author, author),
+  affiliations + (uni-b: affiliation),
+)
 #assert.eq(multiple, original)
 #multiple
 
