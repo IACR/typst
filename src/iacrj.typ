@@ -1010,10 +1010,13 @@
     // The metadata for introspection from the command line, e.g.
     //   typst eval --in main.typ 'query(<iacrj-meta>).first().value'
     // HTML output has no pages.
-    context [#metadata(meta + (
-        pages: if target() != "html" { paper-pages() },
-        abstract: abstract-text,
-      ))<iacrj-meta>]
+    context [#metadata(
+      meta
+        + (
+          pages: if target() != "html" { paper-pages() },
+          abstract: abstract-text,
+        ),
+    )<iacrj-meta>]
     paper
     if args.bibliography.len() > 0 {
       std.bibliography(bibliography-source)
