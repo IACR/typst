@@ -936,7 +936,15 @@
   // It is still unclear how the publishing pipeline should retrieve these
   // source files; record their names rather than exporting the combined data.
   meta.bibliography = args.bibliography
+  meta.keywords = args.keywords
   let abstract-text = args.abstract.text
+
+  // The number of physical pages through the paper-end marker below.
+  let paper-pages() = {
+    let ends = query(metadata.where(value: "iacrj-paper-end"))
+    // The template's boundary follows any matching markers in author content.
+    if ends.len() > 0 { ends.last().location().page() }
+  }
 
   let front-matter = title-block(
     title: full-title,
@@ -972,6 +980,13 @@
     metadata("iacrj-paper-end")
   }
   let doc = {
+    // The metadata for introspection from the command line, e.g.
+    //   typst eval --in main.typ 'query(<iacrj-meta>).first().value'
+    // HTML output has no pages.
+    context [#metadata(meta + (
+        pages: if target() != "html" { paper-pages() },
+        abstract: abstract-text,
+      ))<iacrj-meta>]
     paper
     if args.bibliography.len() > 0 {
       std.bibliography(bibliography-source)
@@ -987,10 +1002,7 @@
     // the metadata is not exactly yaml, should either build new encoder or change output format.
     document("main.pdf", doc)
     // The initial pass must emit main.pdf before its markers can be queried.
-    let ends = query(metadata.where(value: "iacrj-paper-end"))
-    // The template's boundary follows any matching markers in author content.
-    let pages = if ends.len() > 0 { ends.last().location().page() }
-    asset("main.meta", yaml.encode(meta + (pages: pages)))
+    asset("main.meta", yaml.encode(meta + (pages: paper-pages())))
     asset("main.abstract", abstract-text)
   }
 }

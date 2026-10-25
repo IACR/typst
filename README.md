@@ -128,14 +128,14 @@ The output filenames are fixed, independently of the input filename:
 | `authors` | Validated author records, including affiliation keys in `inst`. |
 | `affiliations` | Validated affiliation records keyed by the supplied identifiers, in display order. |
 | `bibliography` | The supplied BibTeX filenames, normalized to a list and kept in input order. Empty when no sources are configured. |
+| `keywords` | The supplied keywords, as a list. |
 | `pages` | The number of physical pages through the end of the paper, excluding bibliography-only pages. |
 | `doi`, `crossmark-date`, `crossmark-url` | Present only for `version: "final"`. Unavailable values are null; the Crossmark URL requires both a DOI and a Crossmark date. |
 
 The `pages` count includes front matter. A page shared by the paper and its
 bibliography counts as a paper page. This uses physical page positions, not the
 page counter or displayed page numbers; without a bibliography it is the paper's
-total page count. Keywords are included in the PDF metadata but are not currently
-written to `main.meta`.
+total page count.
 
 Anonymous submissions have an empty author list and affiliation dictionary in
 `main.meta`; `notanonymous: true` disables that redaction. The abstract is
@@ -146,6 +146,20 @@ The bundle does **not** include the Typst source files, original BibTeX files,
 or concatenated bibliography data. It is therefore not a self-contained source
 archive. Delivery of the referenced BibTeX files to the publishing pipeline is
 still unresolved. Ordinary PDF compilation does not emit the metadata sidecars.
+
+### Querying the metadata
+
+The same record is available without bundle export: the template places it in
+the document as a `metadata` element labeled `<iacrj-meta>`, so `typst eval`
+can extract it as JSON (or YAML with `--format yaml`):
+
+```sh
+typst eval --in src/example.typ 'query(<iacrj-meta>).first().value' --pretty
+typst eval --in src/example.typ 'query(<iacrj-meta>).first().value.title.full'
+```
+
+It has the fields of `main.meta` plus `abstract`, the abstract's Typst markup
+string. `pages` is null for HTML output.
 
 ## Development escape hatch
 
