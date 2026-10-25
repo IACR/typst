@@ -90,15 +90,62 @@ bibliography style and requires citations to inherit it; changing either with
 set rules or explicit element arguments is rejected when checks are enabled.
 Omitting the option (or supplying `()`) adds no bibliography.
 
-Bundle metadata lists the supplied filenames under `bibliography`. The source
-files and combined bibliography are not exported as bundle assets; how the
-publishing pipeline retrieves those files is still unresolved.
+The supplied filenames are recorded in the [bundle metadata](#bundle-output).
+The source files and combined bibliography are not exported as bundle assets;
+how the publishing pipeline retrieves those files is still unresolved.
 
-Bundle metadata also includes `pages`: the number of physical pages through the
-end of the paper, including the front matter but excluding bibliography-only
-pages. A page shared by the paper and bibliography counts as a paper page.
-This uses physical page positions, not displayed page numbers; without a
-bibliography it is the paper's total page count.
+## Bundle output
+
+Bundle export produces the PDF and accompanying machine-readable metadata in
+one output directory. From the repository root, try the included example:
+
+```sh
+typst compile --features bundle --format bundle src/example.typ example-bundle
+```
+
+Typst uses `src/` as the project root for this command, matching the example's
+bibliography paths. For your own paper, replace the input and output paths and
+set `--root` if needed. Typst's bundle export is experimental, requires the
+`bundle` feature flag, and is currently available only in the CLI. Its behavior
+and this template's metadata format may change; this is not yet a finalized
+journal submission format.
+
+The output filenames are fixed, independently of the input filename:
+
+| File | Contents |
+| --- | --- |
+| `main.pdf` | The formatted paper, including the automatically appended bibliography when configured. |
+| `main.meta` | UTF-8 metadata serialized using Typst's `yaml.encode`, with the fields below. |
+| `main.abstract` | The abstract's original Typst markup string, not extracted PDF text or a rendered abstract. Empty when no abstract is supplied. |
+
+`main.meta` currently contains:
+
+| Field | Meaning |
+| --- | --- |
+| `journal`, `version` | The selected journal and document version. |
+| `volume`, `number` | Journal issue metadata supplied by the publisher, or the template defaults. |
+| `title` | A record with `full` and `short` title strings. |
+| `authors` | Validated author records, including affiliation keys in `inst`. |
+| `affiliations` | Validated affiliation records keyed by the supplied identifiers, in display order. |
+| `bibliography` | The supplied BibTeX filenames, normalized to a list and kept in input order. Empty when no sources are configured. |
+| `pages` | The number of physical pages through the end of the paper, excluding bibliography-only pages. |
+| `doi`, `crossmark-date`, `crossmark-url` | Present only for `version: "final"`. Unavailable values are null; the Crossmark URL requires both a DOI and a Crossmark date. |
+
+The `pages` count includes front matter. A page shared by the paper and its
+bibliography counts as a paper page. This uses physical page positions, not the
+page counter or displayed page numbers; without a bibliography it is the paper's
+total page count. Keywords are included in the PDF metadata but are not currently
+written to `main.meta`.
+
+Anonymous submissions have an empty author list and affiliation dictionary in
+`main.meta`; `notanonymous: true` disables that redaction. The abstract is
+preserved verbatim, so authors must remove identifying information from it and
+from the paper's prose themselves.
+
+The bundle does **not** include the Typst source files, original BibTeX files,
+or concatenated bibliography data. It is therefore not a self-contained source
+archive. Delivery of the referenced BibTeX files to the publishing pipeline is
+still unresolved. Ordinary PDF compilation does not emit the metadata sidecars.
 
 ## Development escape hatch
 
