@@ -21,7 +21,10 @@
 )
 
 #context {
-  let position(name) = query(metadata.where(value: name)).first().location().position()
+  let position(name) = query(metadata.where(value: name))
+    .first()
+    .location()
+    .position()
   let first = position("first-line")
   assert.eq(first.x, position("second-line").x)
   assert.eq(first.x, position("continuation").x)

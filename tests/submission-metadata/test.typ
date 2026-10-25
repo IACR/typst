@@ -31,7 +31,9 @@
 // Content equality is not a complete leak check: context blocks compare equal
 // even when they capture different metadata, so they might bypass this check.
 // Also lay out every variant below to exercise deferred headers and metadata.
-#show regex("PRIVATE"): it => panic("Private author or affiliation text leaked.")
+#show regex("PRIVATE"): it => panic(
+  "Private author or affiliation text leaked.",
+)
 
 #original
 #for change in (
@@ -60,7 +62,11 @@
   assert.eq(changed, original)
   // The public renderer must ignore affiliations even if supplied directly.
   assert.eq(
-    title-block(title: "An anonymous paper", authors: (), affiliations: affiliations),
+    title-block(
+      title: "An anonymous paper",
+      authors: (),
+      affiliations: affiliations,
+    ),
     anonymous-title,
   )
   changed

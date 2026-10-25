@@ -40,7 +40,9 @@
         assert.eq(icon.dest, canonical)
         let actual = measure(icon)
         assert(calc.abs(actual.height - 8.2pt) < 0.001pt)
-        assert(calc.abs(actual.width - (8.2pt + margin.to-absolute())) < 0.001pt)
+        assert(
+          calc.abs(actual.width - (8.2pt + margin.to-absolute())) < 0.001pt,
+        )
       }
 
       for height in (6pt, 10pt, 0.8em) {
@@ -59,8 +61,17 @@
 #assert(catch(() => orcid("0000-0002-1825-0098")).contains("invalid checksum"))
 
 // Malformed IDs.
-#for id in ("", "0000-0002-1825-009", "0000-0002-1825-00977", "0000-0002-1825-X097", "abcd-0002-1825-0097") {
-  assert(catch(() => orcid(id)).contains("is not a valid ORCID"), message: repr(id))
+#for id in (
+  "",
+  "0000-0002-1825-009",
+  "0000-0002-1825-00977",
+  "0000-0002-1825-X097",
+  "abcd-0002-1825-0097",
+) {
+  assert(
+    catch(() => orcid(id)).contains("is not a valid ORCID"),
+    message: repr(id),
+  )
 }
 
 // Not a string.

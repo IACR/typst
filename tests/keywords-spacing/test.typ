@@ -27,7 +27,9 @@
 }
 
 #context {
-  let positions(value) = query(metadata.where(value: value)).map(it => it.location().position())
+  let positions(value) = query(metadata.where(value: value)).map(it => it
+    .location()
+    .position())
   let labels = positions("Keywords:")
   let keywords = positions("last keyword")
   let bodies = positions("Body text")

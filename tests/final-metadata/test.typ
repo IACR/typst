@@ -1,17 +1,23 @@
 // Publisher DOI metadata is used only in the final version, and only on page 1.
-#import "/src/iacrj.typ": _iacrj, config, page-header, check-for-updates
+#import "/src/iacrj.typ": _iacrj, check-for-updates, config, page-header
 
 #let doi = "10.62056/a66c0l2hd"
 #let doi-url = "https://doi.org/" + doi
 #let date = "2026-07-24"
-#let updates-url = "https://crossmark.crossref.org/dialog/?doi=10.62056%2Fa66c0l2hd&domain=pdf&date_stamp=" + date
-#let publisher = "volume=3\nnumber=2\ndoi=" + doi + "\ncrossmark-date=" + date + "\n"
+#let updates-url = (
+  "https://crossmark.crossref.org/dialog/?doi=10.62056%2Fa66c0l2hd&domain=pdf&date_stamp="
+    + date
+)
+#let publisher = (
+  "volume=3\nnumber=2\ndoi=" + doi + "\ncrossmark-date=" + date + "\n"
+)
 
 #assert.eq(check-for-updates(doi, date).dest, updates-url)
 #assert.ne(check-for-updates(doi, "2026-07-25").dest, updates-url)
 #assert.eq(
   check-for-updates("10.1234/a&b=c+#%é", date).dest,
-  "https://crossmark.crossref.org/dialog/?doi=10.1234%2Fa%26b%3Dc%2B%23%25%C3%A9&domain=pdf&date_stamp=" + date,
+  "https://crossmark.crossref.org/dialog/?doi=10.1234%2Fa%26b%3Dc%2B%23%25%C3%A9&domain=pdf&date_stamp="
+    + date,
 )
 
 #show: _iacrj.with(
@@ -24,9 +30,16 @@
 
 // These render nothing on physical page 1 even when publication links exist.
 #for version in ("preprint", "submission") {
-  page-header(config.journals.cic, version: version, doi: doi, crossmark-date: date)
+  page-header(
+    config.journals.cic,
+    version: version,
+    doi: doi,
+    crossmark-date: date,
+  )
 }
-#context assert.eq(document.description, [#(config.journals.cic.name + ", DOI: " + doi)])
+#context assert.eq(document.description, [#(
+  config.journals.cic.name + ", DOI: " + doi
+)])
 
 Page one.
 #pagebreak()

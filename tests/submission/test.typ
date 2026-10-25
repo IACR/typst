@@ -8,7 +8,13 @@
   version: "submission",
   title: (full: "An Anonymous Paper", short: "Short Title"),
   authors: (
-    (name: "Alice", inst: 1, email: "alice@example.org", orcid: "0000-0002-1825-0097", footnote: "A footnote"),
+    (
+      name: "Alice",
+      inst: 1,
+      email: "alice@example.org",
+      orcid: "0000-0002-1825-0097",
+      footnote: "A footnote",
+    ),
     (name: "Bob", inst: 2),
   ),
   affiliations: ("University A", "University B"),

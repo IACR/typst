@@ -1,5 +1,5 @@
 // The final CiC header has a DOI and Crossmark badge on physical page 1 only.
-#import "/src/iacrj.typ": page-header, config
+#import "/src/iacrj.typ": config, page-header
 
 #let doi = "10.62056/a66c0l2hd"
 #let updates-url = "https://crossmark.crossref.org/dialog/?doi=10.62056%2Fa66c0l2hd&domain=pdf&date_stamp=2026-07-24"
@@ -16,8 +16,6 @@
   number: 2,
   doi: doi,
   crossmark-date: "2026-07-24",
-
-
 ))
 
 #show link: set text(fill: config.colors.url)

@@ -1,11 +1,17 @@
 // The public renderer works without journal metadata or the iacrj wrapper.
-#import "/src/iacrj.typ": title-block, config
+#import "/src/iacrj.typ": config, title-block
 
 #set text(..config.text)
 #set par(..config.par)
 
 #let authors = (
-  (name: "Alice", inst: (1,), email: "alice@example.org", footnote: "Author note.", orcid: "0000-0002-1825-0097"),
+  (
+    name: "Alice",
+    inst: (1,),
+    email: "alice@example.org",
+    footnote: "Author note.",
+    orcid: "0000-0002-1825-0097",
+  ),
   (name: "Bob", inst: (2,), email: none, footnote: none, orcid: none),
 )
 #let affiliations = (
@@ -44,7 +50,7 @@ Body.#footnote[The body footnote starts at 1.]
   assert.eq(counter(footnote).get(), (1,))
   // Moving the email note into the author block must preserve note order.
   assert.eq(query(footnote).map(it => it.body), (
-    [#("Email: alice@example.org (Alice)")],
+    [#"Email: alice@example.org (Alice)"],
     [Author note.],
     [The body footnote starts at 1.],
   ))

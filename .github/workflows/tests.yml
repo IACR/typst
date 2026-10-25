@@ -7,6 +7,16 @@ on:
   workflow_dispatch: # "Run workflow" button on the Actions tab
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install typstyle
+        run: cargo install --locked typstyle --version 0.15.2
+      - name: Check Typst formatting
+        run: typstyle --check src tests
+
   tests:
     runs-on: ubuntu-latest
     env:

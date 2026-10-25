@@ -15,9 +15,18 @@
 )
 
 #context {
-  let start = query(metadata.where(value: "abstract-start")).first().location().page()
-  let end = query(metadata.where(value: "abstract-end")).first().location().page()
-  assert(end > start, message: "The abstract must be able to span multiple pages.")
+  let start = query(metadata.where(value: "abstract-start"))
+    .first()
+    .location()
+    .page()
+  let end = query(metadata.where(value: "abstract-end"))
+    .first()
+    .location()
+    .page()
+  assert(
+    end > start,
+    message: "The abstract must be able to span multiple pages.",
+  )
 }
 
 Body.

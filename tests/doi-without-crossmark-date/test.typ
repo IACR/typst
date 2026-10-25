@@ -10,7 +10,9 @@
 )
 
 #context {
-  assert.eq(query(link).map(it => it.dest), ("https://doi.org/10.62056/a66c0l2hd",))
+  assert.eq(query(link).map(it => it.dest), (
+    "https://doi.org/10.62056/a66c0l2hd",
+  ))
   assert.eq(query(image).len(), 0)
 }
 

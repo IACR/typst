@@ -5,12 +5,14 @@
 #show: iacrj.with(
   journal: "cic",
   title: "Accessible template",
-  authors: ((
-    name: "Alice",
-    email: "alice@example.org",
-    orcid: "0000-0002-1825-0097",
-    footnote: "An author note.",
-  ),),
+  authors: (
+    (
+      name: "Alice",
+      email: "alice@example.org",
+      orcid: "0000-0002-1825-0097",
+      footnote: "An author note.",
+    ),
+  ),
   affiliations: ("University A",),
   abstract: "An abstract with semantic structure.",
   keywords: ("accessibility", "cryptography"),
@@ -37,14 +39,22 @@ Body text with a footnote.#footnote[A body note.]
 )
 
 #figure(
-  table(columns: 2, table.header([Item], [Value]), [A], [1]),
+  table(
+    columns: 2,
+    table.header([Item], [Value]),
+    [A], [1],
+  ),
   caption: [A sample table.],
 )
 
 #context {
   assert.eq(query(std.title).map(it => it.body), ([Accessible template],))
   let headings = query(heading)
-  assert.eq(headings.map(it => it.body), ([Abstract], [Introduction], [Details]))
+  assert.eq(headings.map(it => it.body), (
+    [Abstract],
+    [Introduction],
+    [Details],
+  ))
   assert.eq(headings.first().numbering, none)
   assert.eq(headings.first().outlined, false)
   assert.eq(counter(heading).at(headings.at(1).location()), (1,))

@@ -109,6 +109,41 @@ Alternatively, build it from source with Cargo. Version 0.4.1 needs Rust
 cargo install --locked tytanic
 ```
 
+## Formatting
+
+All `.typ` files use **typstyle 0.15.2** with its default settings (80 columns,
+two-space indentation). Install it with:
+
+```sh
+cargo install --locked typstyle --version 0.15.2
+```
+
+From the repository root, format or check the sources and test fixtures with:
+
+```sh
+typstyle --inplace src tests
+typstyle --check src tests
+```
+
+CI runs the same formatting check independently of the test suite.
+
+### Jujutsu integration
+
+jj does not use Git pre-commit hooks. Configure its native `jj fix` integration
+once per clone:
+
+```sh
+jj config set --repo fix.tools.typstyle.command '["typstyle"]'
+jj config set --repo fix.tools.typstyle.patterns '["glob:**/*.typ"]'
+jj config set --repo aliases.fmt '["fix", "--source", "@", "--include-unchanged-files"]'
+```
+
+Then run `jj fmt` before finalizing a change. It formats all matching files in
+the working-copy change and its descendants, without rewriting its ancestors.
+This is an explicit command, not an automatic hook; CI rejects unformatted
+changes. Avoid bare `jj fix` unless you intend to format the broader mutable
+history selected by jj's defaults.
+
 ## Running the tests
 
 From anywhere in the repository, run

@@ -11,30 +11,27 @@
       email: "josiah@carberry.org",
       orcid: "0000-0002-1825-0097",
       footnote: "This is a footnote for Josiah",
-      inst: 1
+      inst: 1,
     ),
     (
       name: "Truman Grayson",
-      inst: (1,2)
+      inst: (1, 2),
     ),
     (
       name: "F.D.C. Willard",
       surname: "Willard",
       footnote: "Deceased 1982",
-      inst: 2
-    )
+      inst: 2,
+    ),
   ),
   affiliations: (
     (
       name: "University of Second Choice",
       department: "Department of Redundancy Department",
       city: "Hogsmeade",
-      country: "Elbonia"
+      country: "Elbonia",
     ),
-    ( name: "Vermont State University",
-      city: "Castleton",
-      country: "USA"
-    )
+    (name: "Vermont State University", city: "Castleton", country: "USA"),
   ),
   abstract: read("abstract.typ"),
   enable-checks: true,
@@ -90,6 +87,5 @@ print("Some monospace code")
 ```
 
 == Figures
-We can have figures 
-#figure(box("Box", stroke: 1pt, inset: 1em),
-caption: "Caption of a box")
+We can have figures
+#figure(box("Box", stroke: 1pt, inset: 1em), caption: "Caption of a box")

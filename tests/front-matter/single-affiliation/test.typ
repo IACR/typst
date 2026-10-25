@@ -4,7 +4,10 @@
 #show: iacrj.with(
   journal: "cic",
   title: "Single Affiliation",
-  authors: ((name: "Alice", inst: 1), (name: "Bob", inst: 1, footnote: "A footnote for Bob")),
+  authors: (
+    (name: "Alice", inst: 1),
+    (name: "Bob", inst: 1, footnote: "A footnote for Bob"),
+  ),
   affiliations: ("University of Second Choice",),
 )
 
