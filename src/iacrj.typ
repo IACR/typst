@@ -122,14 +122,13 @@
   )
 
 // Downloaded from https://info.orcid.org/documentation/integration-guide/orcid-id-display-guidelines/
-#let _orcid-icon = image(
+#let _orcid-icon = image.with(
   bytes(```
 <svg width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path fill-rule="evenodd" clip-rule="evenodd" d="M32 16c0 8.837-7.163 16-16 16-8.838 0-16-7.163-16-16C0 7.162 7.162 0 16 0c8.837 0 16 7.162 16 16Z" fill="#A6CE39"/>
   <path fill-rule="evenodd" clip-rule="evenodd" d="M18.813 9.637h-5.45v13.9h5.474c4.555 0 7.35-3.378 7.35-6.95 0-1.635-.562-3.372-1.77-4.704-1.215-1.336-3.065-2.246-5.605-2.246ZM18.6 21.3h-2.813v-9.425H18.5c1.823 0 3.12.552 3.96 1.4.842.849 1.252 2.021 1.252 3.312 0 .784-.239 1.967-.993 2.948-.745.969-2.01 1.765-4.119 1.765Zm5.311-4.026c-.251 1.74-1.494 4.276-5.311 4.276h-3.063H18.6c3.817 0 5.06-2.536 5.311-4.276Zm1.812-2.405c-.657-2.601-2.85-4.982-6.91-4.982h-5.2 5.2c4.06 0 6.253 2.38 6.91 4.982Zm.215 1.718ZM8.363 9.675v13.887h2.425V9.675H8.363Zm2.175 13.637H8.612h1.925ZM9.575 8.65c.84 0 1.513-.689 1.513-1.513 0-.823-.673-1.512-1.513-1.512-.838 0-1.512.674-1.512 1.513 0 .823.672 1.512 1.512 1.512Z" fill="#fff"/>
 </svg>
   ```.text),
-  width: 0.8em,
   alt: "ORCID iD",
   format: "svg",
 )
@@ -143,13 +142,14 @@
 }
 
 /// ORCID iD icon linking to the author's ORCID record, like `\OrcidLink` in
-/// metacapture.sty (used by iacrj.cls): the "authenticated" logo, 0.8em wide,
-/// sitting on the baseline, directly after the author name and affiliation marks.
+/// metacapture.sty (used by iacrj.cls): the "authenticated" logo, sitting on
+/// the baseline with a 0.2em gap after the author name and affiliation marks.
+/// The default height matches the cap height of the 12pt New Computer Modern authors.
 ///
 /// Accepts e.g. "0000-0002-1825-0097", "0000 0002 1825 0097",
 /// "0000000218250097", "https://orcid.org/0000-0002-1825-0097",
 /// "orcid.org/0000-0002-1825-009x". Panics on malformed IDs and wrong checksums.
-#let orcid(id) = {
+#let orcid(id, height: 8.2pt, hor-margin: 0.2em) = {
   assert(
     type(id) == str,
     message: "orcid: expected a string like \"0000-0002-1825-0097\", got " + repr(type(id)),
@@ -171,7 +171,9 @@
 
   let formatted = range(4).map(i => id.slice(i * 4, i * 4 + 4)).join("-")
 
-  link("https://orcid.org/" + formatted, box(_orcid-icon))
+  // metacapture uses a 0.2em gap in other author layouts; keep the spacing
+  // here rather than relying on a literal space at each call site.
+  link("https://orcid.org/" + formatted, box(inset: (left: hor-margin), _orcid-icon(height: height)))
 }
 
 /// Parses the journal metadata that the publisher supplies for the final
@@ -289,7 +291,7 @@
       if show-inst and a.inst != none { super[,] }
       footnote(numbering: "a", a.footnote)
     }
-    if a.orcid != none { [ #orcid(a.orcid)] }
+    if a.orcid != none { orcid(a.orcid) }
   })) }
   let affiliation-lines = if anonymous { () } else { affiliations.enumerate().map(((i, aff)) => {
     if show-inst {

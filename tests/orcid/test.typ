@@ -21,6 +21,37 @@
 #assert.eq(dest("0000-0002-9079-593X"), "https://orcid.org/0000-0002-9079-593X")
 #assert.eq(dest("0000-0002-9079-593x"), "https://orcid.org/0000-0002-9079-593X")
 
+// The default icon height is fixed; only its 0.2em left inset scales with text.
+#assert.eq(orcid(canonical).body.inset, (left: 0.2em))
+#for size in (9pt, 10pt, 12pt) {
+  block({
+    set text(size: size)
+    context {
+      let default = measure(orcid(canonical))
+      assert(calc.abs(default.height - 8.2pt) < 0.001pt)
+      assert(calc.abs(default.width - (8.2pt + 0.2 * size)) < 0.001pt)
+
+      for margin in (0pt, 3pt, 0.4em) {
+        let icon = orcid(canonical, hor-margin: margin)
+        assert.eq(icon.body.inset, (left: margin))
+        assert.eq(icon.dest, canonical)
+        let actual = measure(icon)
+        assert(calc.abs(actual.height - 8.2pt) < 0.001pt)
+        assert(calc.abs(actual.width - (8.2pt + margin.to-absolute())) < 0.001pt)
+      }
+
+      for height in (6pt, 10pt, 0.8em) {
+        let icon = orcid(canonical, height: height)
+        assert.eq(icon.dest, canonical)
+        let actual = measure(icon)
+        let expected = height.to-absolute()
+        assert(calc.abs(actual.height - expected) < 0.001pt)
+        assert(calc.abs(actual.width - (expected + 0.2 * size)) < 0.001pt)
+      }
+    }
+  })
+}
+
 // Wrong checksum.
 #assert(catch(() => orcid("0000-0002-1825-0098")).contains("invalid checksum"))
 
