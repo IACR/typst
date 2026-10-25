@@ -100,6 +100,26 @@ pages. A page shared by the paper and bibliography counts as a paper page.
 This uses physical page positions, not displayed page numbers; without a
 bibliography it is the paper's total page count.
 
+## Development escape hatch
+
+Style checks are enabled by default. If they obstruct development or debugging,
+you can temporarily add `enable-checks: false` to the template options:
+
+```typ
+#show: iacrj.with(
+  journal: "cic",
+  title: "Work in progress",
+  authors: ("Alice",),
+  enable-checks: false,
+)
+```
+
+This disables style checks, not the template's default formatting or metadata
+validation. Manual `bibliography(...)` calls remain prohibited; supply files
+through the `bibliography:` option. Restore `enable-checks: true`, or remove the
+option, before submission. This is a development aid, not permission to change
+the journal's required style.
+
 ## Final-version DOI and update badge
 
 The publisher supplies publication links through the `iacrmetadata` input,

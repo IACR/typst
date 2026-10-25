@@ -1,10 +1,14 @@
-Let $norm(v)$ denote the length of a vector $v$, and consider
-the partial sum
+This sample illustrates a Typst template for IACR journal articles, with
+structured front matter, linked affiliations, ORCID records, and alphanumeric
+citations. It also demonstrates accessible mathematical content. For a sequence
+of real numbers, consider the partial sum
 
-$
-  sum_(i=1)^n x_i^2 / 2.
-$
-That was a display equation in typst. I gather that it must be preceded by a
-blank line to terminate the block before it. The weird part is that the
-typesetting when you include this file inside example.typ seems to be
-different than if you typeset this abstract.typ by itself.
+#math.equation(
+  block: true,
+  alt: "The sum, for i from one to n, of x sub i squared divided by two.",
+  $sum_(i=1)^n x_i^2 / 2.$,
+)
+
+The template preserves this abstract's source for the publishing pipeline while
+rendering its text and display equation in the paper. Separate metadata controls
+anonymous submissions and the final publication header.
