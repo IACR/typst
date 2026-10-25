@@ -45,8 +45,33 @@
 // document.
 #assert(error(journal: "cic", title: "T", authors: ("A",), volume: 5).contains("volume"))
 #assert(error(journal: "cic", title: "T", authors: ("A",), iacrmetadata: "volume=5").contains("publisher"))
-#assert.eq(_parse-iacrmetadata(""), (volume: none, number: none))
-#assert.eq(_parse-iacrmetadata("volume=5\nnumber=3\n"), (volume: 5, number: 3))
-#assert.eq(_parse-iacrmetadata(" volume = 5 \n\ndoi=10.62056/a1b2=c\n"), (volume: 5, number: none))
+#let empty-metadata = (volume: none, number: none, doi: none, crossmark-date: none)
+#assert.eq(_parse-iacrmetadata(""), empty-metadata)
+#assert.eq(_parse-iacrmetadata("volume=5\nnumber=3\n"), empty-metadata + (volume: 5, number: 3))
+#assert.eq(
+  _parse-iacrmetadata(" volume = 5 \n\ndoi=10.62056/a1b2=c\nunknown=value\n"),
+  empty-metadata + (volume: 5, doi: "10.62056/a1b2=c"),
+)
+#assert.eq(_parse-iacrmetadata("doi=\ncrossmark-date=\n"), empty-metadata)
+#assert.eq(
+  _parse-iacrmetadata("crossmark-date=2026-07-24\n"),
+  empty-metadata + (crossmark-date: "2026-07-24"),
+)
+#assert.eq(
+  _parse-iacrmetadata("crossmark-date=2024-02-29\n"),
+  empty-metadata + (crossmark-date: "2024-02-29"),
+)
+// Strict format validation rejects missing padding, extra parts and query injection.
+#for date in ("2026-7-24", "2026-07-4", "26-07-24", "2026", "2026-09", "2026-09-30-extra", "2026-07-24&domain=html", "not-a-date", "2026--31") {
+  assert(catch(() => _parse-iacrmetadata("crossmark-date=" + date)).contains("expected YYYY-MM-DD"), message: date)
+}
+// Correctly formatted dates must also represent a real calendar date.
+#for date in ("2026-02-29", "2026-13-01", "2026-04-31", "2026-09-31") {
+  assert(catch(() => _parse-iacrmetadata("crossmark-date=" + date)) != none, message: date)
+}
+#assert(catch(() => _parse-iacrmetadata("crossmark-date=2026-09-31")).contains("date is invalid"))
+#assert(error(journal: "cic", title: "T", authors: ("A",), doi: "10.62056/a1b2").contains("doi"))
+#assert(error(journal: "cic", title: "T", authors: ("A",), crossmark-date: "2026-07-24").contains("crossmark-date"))
+#assert(error(journal: "cic", title: "T", authors: ("A",), crossmark-url: "https://example.org/updates").contains("crossmark-url"))
 #assert(catch(() => _parse-iacrmetadata("volume=five")).contains("whole number"))
 #assert(catch(() => _parse-iacrmetadata("volume 5")).contains("key=value"))

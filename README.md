@@ -27,6 +27,36 @@ pushd ~/.local/share/fonts/NewComputerModern
 unzip ~/Downloads/newcomputermodern.zip
 ```
 
+## Final-version DOI and update badge
+
+The publisher supplies publication links through the `iacrmetadata` input,
+not through author-facing template arguments. For example, a metadata file can
+contain:
+
+```text
+volume=3
+number=2
+doi=10.62056/a66c0l2hd
+crossmark-date=2026-07-24
+
+```
+
+Use the DOI identifier, not its `https://doi.org/` URL. In `version: "final"`,
+the DOI appears in the first-page header and PDF description (subject), and the
+DOI, Crossmark date, and update URL are included in the bundle metadata. Preprints and submissions
+do not expose these publication links.
+
+For CiC, the DOI URL is right-aligned above the linked “Check for updates” badge,
+as in the LaTeX class. ToSC and TCHES instead show `DOI: ...` on the issue line,
+without a badge. The badge SVG is stored in `_crossmark-icon` in `src/iacrj.typ`;
+`check-for-updates` renders it at 69pt wide by default. The badge's Crossmark
+URL is derived automatically from the DOI and `crossmark-date`; no separate
+URL is supplied. `crossmark-date` must use the exact `YYYY-MM-DD` format,
+including zero-padded month and day, and represent a valid calendar date. It identifies
+the PDF's last major version—normally its publication date, or the date of a
+significant in-place correction. It is never inferred from the compilation date.
+Without it, the DOI link is still rendered but the Crossmark badge is omitted.
+
 ## Dependencies
 
 * **Typst** and the **New Computer Modern** fonts, as described above.
