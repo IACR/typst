@@ -18,6 +18,10 @@
   cite: [#set cite(style: "apa")
     Changed citation style.],
   explicit-cite: [#cite(<single>, style: "apa")],
+  equation-above: [#show math.equation.where(block: true): set block(above: 0pt)
+    $ x = y $],
+  equation-below: [#show math.equation.where(block: true): set block(below: 0pt)
+    $ x = y $],
   manual-bibliography: [#bibliography("/tests/bibliography-single/works.bib")],
   explicit-bibliography: [#bibliography(
     "/tests/bibliography-single/works.bib",

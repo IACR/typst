@@ -67,6 +67,10 @@
     spacing: 0.5em, // \parskip = 0pt
   ),
 
+  // Approximate article.cls's regular display skips: 10pt in the body and
+  // 9pt in the abstract (LaTeX uses 8.5pt). No short-line or stretch/shrink logic.
+  equation: (above: 1em, below: 1em),
+
   // article.cls headings. CiC: serif bold; ToSC/TCHES: sans bold (sectsty).
   // TODO: check spacing
   heading: (
@@ -821,7 +825,14 @@
     )
   }
 
-  let config-checks() = context {
+  let config-checks(display-equation: false) = context {
+    if not enable-checks { return }
+    // Equation spacing is local to its show rule; paragraph context cannot
+    // observe it. Math also intentionally uses different text settings.
+    if display-equation {
+      check(block, config.equation)
+      return
+    }
     check(
       text,
       if text.font == config.raw.font {
@@ -846,6 +857,11 @@
   set par(..config.par)
   set std.bibliography(..config.bibliography)
   set cite(..config.cite)
+  show math.equation.where(block: true): set block(..config.equation)
+  show math.equation.where(block: true): it => {
+    config-checks(display-equation: true)
+    it
+  }
 
   // Also check explicit citation style arguments, not just set rules.
   show cite: it => if enable-checks {

@@ -1,4 +1,4 @@
-// Check spacing at the display equation, not merely elsewhere in the abstract.
+// Check equation spacing in the abstract and body, without affecting inline math.
 #import "/src/iacrj.typ": iacrj
 
 #show: iacrj.with(
@@ -8,8 +8,9 @@
   abstract: ```typ
     #show math.equation: it => context {
       assert(it.block, message: "The regression must exercise display math.")
-      assert.eq(block.above, auto)
-      assert.eq(block.below, auto)
+      assert.eq(text.size, 9pt)
+      assert.eq(block.above, 1em)
+      assert.eq(block.below, 1em)
       it
     }
 
@@ -19,4 +20,13 @@
   ```.text,
 )
 
-Body.
+#show math.equation: it => context {
+  assert.eq(text.size, 10pt)
+  assert.eq(block.above, if it.block { 1em } else { auto })
+  assert.eq(block.below, if it.block { 1em } else { auto })
+  it
+}
+
+Body with inline math $x + y$.
+$ sum_(i=1)^n x_i^2 / 2 $
+After the display equation.

@@ -15,7 +15,8 @@ OVERRIDES = {
     "bibliography": "bibliography.style",
     "cite": "cite.style",
     "explicit-cite": "cite.style",
-
+    "equation-above": "block.above",
+    "equation-below": "block.below",
 }
 
 
