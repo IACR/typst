@@ -313,7 +313,8 @@
 /// e.g. "volume=5\nnumber=3". Optional `doi` and `crossmark-date` fields supply
 /// final-version links; the date identifies the PDF's last major version.
 /// Blank lines and unknown keys are ignored, so
-/// the publisher can add keys before the template uses them.
+/// the publisher can add keys before the template uses them. Values are
+/// unquoted and each key may appear only once.
 #let _parse-iacrmetadata(text) = {
   let values = (:)
   for line in text.split("\n").map(str.trim).filter(line => line != "") {
@@ -325,7 +326,22 @@
           + "\" is not of the form key=value.",
       )
     }
-    values.insert(parts.first().trim(), parts.slice(1).join("=").trim())
+    let key = parts.first().trim()
+    let value = parts.slice(1).join("=").trim()
+    if key in values {
+      panic("iacrj: iacrmetadata key " + key + " appears more than once.")
+    }
+    // A quoted value would put the quotes into the header and the DOI links.
+    if value.match(regex("^[\"'`]|[\"'`]$")) != none {
+      panic(
+        "iacrj: iacrmetadata "
+          + key
+          + " must not be quoted, got "
+          + value
+          + ".",
+      )
+    }
+    values.insert(key, value)
   }
 
   let integer(key) = {
@@ -346,11 +362,22 @@
     let value = values.at(key, default: none)
     if value == "" { none } else { value }
   }
+  let doi = optional("doi")
+  // A DOI name is "10.<registrant>/<suffix>"; the suffix may contain "/" and
+  // "=", but no whitespace.
+  if doi != none and doi.match(regex("^10\.\d{4,9}/\S+$")) == none {
+    panic(
+      "iacrj: iacrmetadata doi must be a DOI such as 10.62056/a66c0l2hd, "
+        + "not its https://doi.org/ URL; got \""
+        + doi
+        + "\".",
+    )
+  }
   let crossmark-date = optional("crossmark-date")
   (
     volume: integer("volume"),
     number: integer("number"),
-    doi: optional("doi"),
+    doi: doi,
     crossmark-date: if crossmark-date != none {
       _validate-date(crossmark-date)
     },
@@ -1008,16 +1035,23 @@
 }
 
 /// The iacrj template. The publisher supplies journal metadata (volume,
-/// number, doi and crossmark-date) for the final version on the command line, like the
-/// \jobname.iacrmetadata file that iacrj.cls reads:
+/// number, doi and crossmark-date) for the final version in a file like the
+/// \jobname.iacrmetadata file that iacrj.cls reads, named on the command line
+/// relative to the project root:
 ///
-///   typst compile --input iacrmetadata="$(cat main.iacrmetadata)" main.typ
+///   typst compile --input iacrmetadata=main.iacrmetadata main.typ
 ///
-/// Authors cannot set these values in the document.
+/// Without the input, the document compiles without these values. Authors
+/// cannot set them in the document.
 #let iacrj(..args) = {
   assert(
     "iacrmetadata" not in args.named(),
     message: "iacrj: the journal metadata is supplied by the publisher, not the document.",
   )
-  _iacrj(iacrmetadata: sys.inputs.at("iacrmetadata", default: ""), ..args)
+  // Typst cannot test whether a file exists, so read it only when named.
+  let file = sys.inputs.at("iacrmetadata", default: "").trim()
+  let iacrmetadata = if file == "" { "" } else {
+    read("/" + file.trim(at: start, "/"))
+  }
+  _iacrj(iacrmetadata: iacrmetadata, ..args)
 }

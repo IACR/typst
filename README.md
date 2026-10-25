@@ -183,9 +183,9 @@ the journal's required style.
 
 ## Final-version DOI and update badge
 
-The publisher supplies publication links through the `iacrmetadata` input,
-not through author-facing template arguments. For example, a metadata file can
-contain:
+The publisher supplies publication links in a metadata file named by the
+`iacrmetadata` input, not through author-facing template arguments. For example,
+a metadata file can contain:
 
 ```text
 volume=3
@@ -194,6 +194,18 @@ doi=10.62056/a66c0l2hd
 crossmark-date=2026-07-24
 
 ```
+
+Name the file relative to the project root (`src/` for the included example):
+
+```sh
+typst compile --input iacrmetadata=main.iacrmetadata src/example.typ
+```
+
+Without the input, the paper compiles without a volume, number, DOI or badge.
+Typst cannot test whether a file exists, so a named file that is missing is a
+compilation error. Each line is `key=value`; blank lines and unknown keys are
+ignored, but a repeated key, a quoted value, a non-numeric volume or number, or
+a malformed DOI or date stops compilation with an error.
 
 Use the DOI identifier, not its `https://doi.org/` URL. In `version: "final"`,
 the DOI appears in the first-page header and PDF description (subject), and the

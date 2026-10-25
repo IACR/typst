@@ -238,3 +238,27 @@
   catch(() => _parse-iacrmetadata("volume=five")).contains("whole number"),
 )
 #assert(catch(() => _parse-iacrmetadata("volume 5")).contains("key=value"))
+#assert(
+  catch(() => _parse-iacrmetadata("volume=5\nvolume=6")).contains(
+    "more than once",
+  ),
+)
+#for value in ("\"10.62056/a1b2\"", "'10.62056/a1b2'", "\"5\"") {
+  assert(
+    catch(() => _parse-iacrmetadata("doi=" + value)).contains("quoted"),
+    message: value,
+  )
+}
+#for doi in (
+  "https://doi.org/10.62056/a1b2",
+  "doi:10.62056/a1b2",
+  "10.62056",
+  "10.62056/",
+  "10.62056/a b",
+  "11.62056/a1b2",
+) {
+  assert(
+    catch(() => _parse-iacrmetadata("doi=" + doi)).contains("must be a DOI"),
+    message: doi,
+  )
+}
