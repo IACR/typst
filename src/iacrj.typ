@@ -111,9 +111,9 @@
       // article abstract: \small, quotation margins 2.5em, indent 1.5em
       abstract: (
         gap: 29.8pt,
-        heading-gap: 9.6pt,
+        heading-gap: 4.6pt,
         text: (size: 9pt),
-        par: (leading: 4.7pt, spacing: 4.7pt, justify: true, first-line-indent: (amount: 1.5em, all: true)),
+        par: (leading: 4.7pt, spacing: 4.7pt, justify: true, first-line-indent: (amount: 1.5em, all: false)),
         margin: 25pt,
       ),
       // \textbf{\textsf{Keywords:}}~
@@ -342,9 +342,7 @@
       set par(..tb.abstract.par)
       align(center, strong[Abstract])
       v(tb.abstract.heading-gap)
-      // The parbreak makes a one-paragraph abstract a real paragraph, so it
-      // gets the first-line indent too.
-      pad(x: tb.abstract.margin, { abstract; parbreak() })
+      pad(x: tb.abstract.margin, abstract)
     })
   }
   if keywords.len() > 0 {
