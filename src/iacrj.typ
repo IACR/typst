@@ -199,6 +199,100 @@
   (volume: integer("volume"), number: integer("number"))
 }
 
+/// Render the title, authors, affiliations, abstract and keywords.
+/// Authors and affiliations are the normalized metadata dictionaries used by
+/// `iacrj`; the abstract is rendered content, or `none` to omit it.
+/// An empty author list renders an anonymous submission and hides affiliations.
+/// This function inherits document-wide styling from its caller.
+#let title-block(
+  title: "",
+  authors: (),
+  affiliations: (),
+  abstract: none,
+  keywords: (),
+) = {
+  let anonymous = authors.len() == 0
+  let tb = config.title-block
+  let marks(it, raise) = super(..tb.marks, baseline: raise, it)
+
+  // With a single author or a single affiliation the numbers carry no
+  // information, so neither the authors nor the affiliations get them.
+  let show-inst = authors.len() > 1 and affiliations.len() > 1
+
+  let author-names = if anonymous { ([Anonymous Submission],) } else { authors.map(a => box({
+    a.name
+    if show-inst and a.inst != none { marks(a.inst.map(str).join(","), tb.authors.mark-raise) }
+    if a.footnote != none {
+      // Author footnotes are lettered (a, b, ...) and placed like the
+      // affiliation marks, so "1,a" reads as one superscript.
+      set super(..tb.marks, baseline: tb.authors.mark-raise)
+      if show-inst and a.inst != none { super[,] }
+      footnote(numbering: "a", a.footnote)
+    }
+    if a.orcid != none { [ #orcid(a.orcid)] }
+  })) }
+  let affiliation-lines = if anonymous { () } else { affiliations.enumerate().map(((i, aff)) => {
+    if show-inst {
+      marks(str(i + 1), tb.affiliations.mark-raise)
+      [~]
+    }
+    (aff.department, aff.name, aff.city, aff.country).filter(x => x != none).join(", ")
+  }) }
+  let emails = if anonymous { () } else {
+    authors.filter(a => a.email != none).map(a => a.email + " (" + a.name + ")")
+  }
+
+  set par(justify: false, first-line-indent: 0pt)
+  // Only the outer blocks use `gap` for spacing. A set rule here would
+  // also remove spacing around display equations inside the abstract.
+  let block = block.with(spacing: 0pt)
+  align(center, {
+    v(tb.title.gap)
+    block({
+      set par(leading: tb.title.leading)
+      // The emails footnote has no marker. Footnotes are listed in document
+      // order, so placing it at the title puts it before the author footnotes.
+      if emails.len() > 0 {
+        let label = if emails.len() == 1 { "Email: " } else { "Emails: " }
+        footnote(numbering: n => none, label + emails.join(", "))
+        counter(footnote).update(0) // so author footnotes start at a
+      }
+      text(..tb.title.text, title)
+    })
+    v(tb.authors.gap)
+    block({
+      set par(leading: tb.authors.leading)
+      text(..tb.authors.text, author-names.join(", ", last: " and "))
+    })
+    if affiliation-lines.len() > 0 {
+      v(tb.affiliations.gap)
+      block({
+        set text(..tb.affiliations.text)
+        set par(leading: tb.affiliations.leading)
+        affiliation-lines.join(linebreak())
+      })
+    }
+  })
+  if abstract != none {
+    v(tb.abstract.gap)
+    block({
+      set text(..tb.abstract.text)
+      set par(..tb.abstract.par)
+      align(center, strong[Abstract])
+      v(tb.abstract.heading-gap)
+      // The parbreak makes a one-paragraph abstract a real paragraph, so it
+      // gets the first-line indent too.
+      pad(x: tb.abstract.margin, { abstract; parbreak() })
+    })
+  }
+  if keywords.len() > 0 {
+    v(tb.keywords.gap)
+    block[#text(..tb.keywords.label)[Keywords:]~#keywords.join(", ")]
+  }
+  // Author and email footnotes don't count: the paper's first footnote is 1.
+  counter(footnote).update(0)
+}
+
 // The template itself. `iacrmetadata` is the text of main.iacrmetadata;
 // authors use `iacrj` below, which takes it from the compiler instead.
 #let _iacrj(
@@ -454,92 +548,16 @@
   let abstract-text = args.abstract.text
 
 
-  // TODO: review author block
-  let tb = config.title-block
-  let marks(it, raise) = super(..tb.marks, baseline: raise, it)
+  let front-matter = title-block(
+    title: full-title,
+    authors: if anonymous { () } else { args.authors },
+    affiliations: if anonymous { () } else { args.affiliations },
+    abstract: if args.abstract.text != "" { args.abstract.content },
+    keywords: args.keywords,
+  )
 
-  // With a single author or a single affiliation the numbers carry no
-  // information, so neither the authors nor the affiliations get them.
-  let show-inst = args.authors.len() > 1 and args.affiliations.len() > 1
-
-  let author-names = if anonymous { ([Anonymous Submission],) } else { args.authors.map(a => box({
-    a.name
-    if show-inst and a.inst != none { marks(a.inst.map(str).join(","), tb.authors.mark-raise) }
-    if a.footnote != none {
-      // Author footnotes are lettered (a, b, ...) and placed like the
-      // affiliation marks, so "1,a" reads as one superscript.
-      set super(..tb.marks, baseline: tb.authors.mark-raise)
-      if show-inst and a.inst != none { super[,] }
-      footnote(numbering: "a", a.footnote)
-    }
-    if a.orcid != none { [ #orcid(a.orcid)] }
-  })) }
-  let affiliation-lines = if anonymous { () } else { args.affiliations.enumerate().map(((i, aff)) => {
-    if show-inst {
-      marks(str(i + 1), tb.affiliations.mark-raise)
-      [~]
-    }
-    (aff.department, aff.name, aff.city, aff.country).filter(x => x != none).join(", ")
-  }) }
-  let emails = if anonymous { () } else {
-    args.authors.filter(a => a.email != none).map(a => a.email + " (" + a.name + ")")
-  }
-
-  let title-block = {
-    set par(justify: false, first-line-indent: 0pt)
-    // Only the outer blocks use `gap` for spacing. A set rule here would
-    // also remove spacing around display equations inside the abstract.
-    let block = block.with(spacing: 0pt)
-    align(center, {
-      v(tb.title.gap)
-      block({
-        set par(leading: tb.title.leading)
-        // The emails footnote has no marker. Footnotes are listed in document
-        // order, so placing it at the title puts it before the author footnotes.
-        if emails.len() > 0 {
-          let label = if emails.len() == 1 { "Email: " } else { "Emails: " }
-          footnote(numbering: n => none, label + emails.join(", "))
-          counter(footnote).update(0) // so author footnotes start at a
-        }
-        text(..tb.title.text, full-title)
-      })
-      v(tb.authors.gap)
-      block({
-        set par(leading: tb.authors.leading)
-        text(..tb.authors.text, author-names.join(", ", last: " and "))
-      })
-      if affiliation-lines.len() > 0 {
-        v(tb.affiliations.gap)
-        block({
-          set text(..tb.affiliations.text)
-          set par(leading: tb.affiliations.leading)
-          affiliation-lines.join(linebreak())
-        })
-      }
-    })
-    if args.abstract.text != "" {
-      v(tb.abstract.gap)
-      block({
-        set text(..tb.abstract.text)
-        set par(..tb.abstract.par)
-        align(center, strong[Abstract])
-        v(tb.abstract.heading-gap)
-        // The parbreak makes a one-paragraph abstract a real paragraph, so it
-        // gets the first-line indent too.
-        pad(x: tb.abstract.margin, { args.abstract.content; parbreak() })
-      })
-    }
-    if args.keywords.len() > 0 {
-      v(tb.keywords.gap)
-      block[#text(..tb.keywords.label)[Keywords:]~#args.keywords.join(", ")]
-    }
-    // Author and email footnotes don't count: the paper's first footnote is 1.
-    counter(footnote).update(0)
-  }
-
-  
   let doc = {
-    title-block
+    front-matter
 
     // The title-block customizes spacing, so should not be checked
     if enable-checks { 
