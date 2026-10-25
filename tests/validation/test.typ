@@ -5,6 +5,18 @@
 #let error(..args) = catch(() => iacrj(..args)[Body])
 #assert(catch(() => affiliation-marker("2")).contains("expected an integer"))
 
+// Bibliography sources must be a string or a tuple of nonempty strings.
+#for bibliography in (none, 1, "", (1,), ("valid.bib", 1)) {
+  assert(
+    error(
+      journal: "cic",
+      title: "T",
+      authors: ("A",),
+      bibliography: bibliography,
+    ).contains("iacrj.bibliography"),
+  )
+}
+
 // Valid minimal calls.
 #iacrj(journal: "cic", title: "T", authors: ("A",))[]
 #iacrj(

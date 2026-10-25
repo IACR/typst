@@ -58,6 +58,40 @@ only a `name`. Every referenced key must exist. Affiliation arrays and numeric
 `inst` references are no longer accepted. Anonymous submissions omit authors
 and affiliations from both the front matter and bundle metadata.
 
+## Bibliography
+
+Pass one BibTeX filename or a tuple of filenames to the template:
+
+```typ
+#show: iacrj.with(
+  journal: "cic",
+  title: "Example paper",
+  authors: ("Alice",),
+  bibliography: ("references/strings.bib", "references/works.bib"),
+)
+
+A citation to @example.
+```
+
+Paths are relative to the Typst project root, with an optional leading `/`,
+not to the template or the calling file. The template reads and concatenates
+these files in the supplied order, then passes the combined bytes to Typst's
+native bibliography function. This lets BibTeX string aliases defined in one
+file be used in another. A References section is appended automatically; do not
+add a separate `#bibliography(...)` call. The small `src/iacrj.csl` style
+approximates the LaTeX class's `alphaurl` style: matching bracketed alphanumeric
+labels in citations and the reference list, author-sorted entries, and DOI/URL
+information. It uses Typst's native bibliography rendering; the two styles are
+not identical. Typst's built-in `alphanumeric` style supports citations only,
+so it cannot render the reference list on its own. Native bibliography
+set/show rules placed before the template's show rule can customize the
+listing's title and presentation; the citation style is set by the template.
+Omitting the option (or supplying `()`) adds no bibliography.
+
+Bundle metadata lists the supplied filenames under `bibliography`. The source
+files and combined bibliography are not exported as bundle assets; how the
+publishing pipeline retrieves those files is still unresolved.
+
 ## Final-version DOI and update badge
 
 The publisher supplies publication links through the `iacrmetadata` input,

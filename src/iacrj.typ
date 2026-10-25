@@ -618,6 +618,7 @@
   affiliations: (:),
   abstract: "",
   keywords: (),
+  bibliography: (),
   enable-checks: true,
   body,
 ) = {
@@ -665,6 +666,7 @@
       affiliations: affiliations,
       abstract: abstract,
       keywords: keywords,
+      bibliography: bibliography,
     ),
     z.dictionary((
       // The IACR journal: Communications in Cryptology (cic), Transactions
@@ -716,6 +718,11 @@
         },
       ),
       keywords: z.array(z.string()),
+      bibliography: z.array(
+        z.string(min: 1),
+        default: none,
+        pre-transform: (self, it) => if type(it) == str { (it,) } else { it },
+      ),
     )),
     scope: ("iacrj",),
     ctx: z.z-ctx(strict: true), // reject unknown keys, e.g. (full: .., shrot: ..)
@@ -733,6 +740,13 @@
       )
     }
   }
+
+  // Read all sources before parsing: BibTeX string aliases may be defined
+  // in a different file from the entries that use them. Paths are root-relative.
+  let bibliography-source = args
+    .bibliography
+    .map(file => read("/" + file.trim(at: start, "/"), encoding: none))
+    .join(bytes("\n"))
 
   // Volume and number for the first-page header (\IACR@vol, \IACR@no).
   let iacr = _parse-iacrmetadata(iacrmetadata)
@@ -877,6 +891,9 @@
       _crossmark-url(iacr.doi, iacr.crossmark-date)
     }
   }
+  // It is still unclear how the publishing pipeline should retrieve these
+  // source files; record their names rather than exporting the combined data.
+  meta.bibliography = args.bibliography
   let abstract-text = args.abstract.text
 
   let front-matter = title-block(
@@ -899,6 +916,10 @@
       body
     } else {
       body
+    }
+    if args.bibliography.len() > 0 {
+      // The built-in alphanumeric style only supports citations, not a listing.
+      std.bibliography(bibliography-source, style: "iacrj.csl")
     }
   }
 

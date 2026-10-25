@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0">
+  <info>
+    <title>IACR Journals (alphanumeric)</title>
+    <id>https://publish.iacr.org/csl/iacrj-typst</id>
+    <summary>A compact approximation of BibTeX alphaurl for the Typst template.</summary>
+  </info>
+  <macro name="label">
+    <group>
+      <text variable="citation-label"/>
+      <text variable="year-suffix"/>
+    </group>
+  </macro>
+  <macro name="author">
+    <names variable="author">
+      <name and="text" delimiter=", "/>
+      <substitute>
+        <names variable="editor"/>
+        <text variable="title"/>
+      </substitute>
+    </names>
+  </macro>
+  <macro name="issued">
+    <date variable="issued"><date-part name="year"/></date>
+  </macro>
+  <macro name="publication">
+    <choose>
+      <if type="article-journal article-magazine article-newspaper" match="any">
+        <group delimiter=", ">
+          <group delimiter=" ">
+            <text variable="container-title" font-style="italic"/>
+            <group>
+              <text variable="volume"/>
+              <text variable="issue" prefix="(" suffix=")"/>
+            </group>
+          </group>
+          <text variable="page"/>
+          <text macro="issued"/>
+        </group>
+      </if>
+      <else-if type="paper-conference chapter" match="any">
+        <group delimiter=", ">
+          <text variable="container-title" prefix="In " font-style="italic"/>
+          <text variable="page" prefix="pages "/>
+          <text variable="publisher"/>
+          <text macro="issued"/>
+        </group>
+      </else-if>
+      <else>
+        <group delimiter=", ">
+          <text variable="publisher"/>
+          <text macro="issued"/>
+        </group>
+      </else>
+    </choose>
+  </macro>
+  <macro name="links">
+    <group delimiter=". ">
+      <text variable="DOI" prefix="doi:"/>
+      <text variable="URL"/>
+    </group>
+  </macro>
+  <citation disambiguate-add-year-suffix="true">
+    <sort>
+      <key variable="author"/>
+      <key variable="issued"/>
+    </sort>
+    <layout prefix="[" suffix="]" delimiter=", ">
+      <group delimiter=", ">
+        <text macro="label"/>
+        <text variable="locator"/>
+      </group>
+    </layout>
+  </citation>
+  <bibliography second-field-align="flush" entry-spacing="0">
+    <sort>
+      <key macro="author"/>
+      <key macro="issued"/>
+      <key variable="title"/>
+    </sort>
+    <layout suffix=".">
+      <text macro="label" prefix="[" suffix="]"/>
+      <group delimiter=". ">
+        <text macro="author"/>
+        <choose>
+          <if type="book report thesis" match="any">
+            <text variable="title" font-style="italic"/>
+          </if>
+          <else><text variable="title"/></else>
+        </choose>
+        <text macro="publication"/>
+        <text macro="links"/>
+      </group>
+    </layout>
+  </bibliography>
+</style>
