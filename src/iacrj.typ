@@ -249,6 +249,60 @@
   )
 }
 
+/// Render the publication header: journal, issue, DOI and Crossmark badge.
+/// The caller decides whether this header should appear; page counts resolve
+/// in context. `journal` is a dictionary with `name` and `issn`.
+#let first-page-header(
+  journal,
+  volume: none,
+  number: none,
+  doi: none,
+  crossmark-date: none,
+) = context {
+  // Journal name and issue on the left, publication links on the right.
+  set text(..config.first-page-header.text)
+  set par(leading: config.first-page-header.leading)
+  let pages = counter(page).final().first()
+  let issue = (
+    [ISSN~#journal.issn],
+    if volume != none [Vol.~#volume],
+    if number != none [No.~#number],
+    [#pages~#if pages == 1 [page.] else [pages.]],
+  ).filter(x => x != none)
+  let cic = journal.issn == config.journals.cic.issn
+  let journal-info = {
+    journal.name
+    linebreak()
+    issue.join[, ]
+  }
+  let header = block(width: 100%, spacing: 0pt, {
+    if cic and doi != none {
+      grid(
+        columns: (1fr, auto),
+        column-gutter: 1em,
+        align: top,
+        journal-info,
+        {
+          set align(right)
+          link("https://doi.org/" + doi)
+          if crossmark-date != none {
+            linebreak()
+            v(config.first-page-header.updates-gap)
+            check-for-updates(doi, crossmark-date)
+          }
+        },
+      )
+    } else {
+      journal-info
+      if not cic and doi != none {
+        h(1fr)
+        link("https://doi.org/" + doi)[DOI: #doi]
+      }
+    }
+  })
+  move(dy: config.first-page-header.dy, header)
+}
+
 /// Render the first-page journal header and subsequent running heads.
 /// `journal` is a dictionary with `name` and `issn`; authors are normalized
 /// metadata dictionaries. An empty author list produces an anonymous running head.
@@ -276,40 +330,13 @@
     let n = counter(page).get().first()
     if here().page() == 1 {
       if version != "final" { return }
-      // Journal name and issue on the left. The header ends at the baseline
-      // of its last line, like the running head.
-      set text(..config.first-page-header.text)
-      set par(leading: config.first-page-header.leading)
-      let pages = counter(page).final().first()
-      let issue = (
-        [ISSN~#journal.issn],
-        if volume != none [Vol.~#volume],
-        if number != none [No.~#number],
-        [#pages~#if pages == 1 [page.] else [pages.]],
-      ).filter(x => x != none)
-      let cic = journal.issn == config.journals.cic.issn
-      let doi-link = if doi != none { link("https://doi.org/" + doi) }
-      move(dy: config.first-page-header.dy, block(width: 100%, spacing: 0pt, {
-        // Overlay the right column so the badge cannot shift the left header.
-        if cic and doi != none {
-          place(top + right, {
-            set align(right)
-            doi-link
-            if crossmark-date != none {
-              linebreak()
-              v(config.first-page-header.updates-gap)
-              check-for-updates(doi, crossmark-date)
-            }
-          })
-        }
-        journal.name
-        linebreak()
-        issue.join[, ]
-        if not cic and doi != none {
-          h(1fr)
-          link("https://doi.org/" + doi)[DOI: #doi]
-        }
-      }))
+      first-page-header(
+        journal,
+        volume: volume,
+        number: number,
+        doi: doi,
+        crossmark-date: crossmark-date,
+      )
       return
     }
     if calc.odd(n) {
