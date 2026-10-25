@@ -951,6 +951,9 @@
     } else {
       body
     }
+    // An invisible boundary records the last physical page of the paper,
+    // including front matter but excluding any bibliography-only pages.
+    metadata("iacrj-paper-end")
   }
   let doc = {
     paper
@@ -967,7 +970,11 @@
     // bundle: the paper plus a metadata file
     // the metadata is not exactly yaml, should either build new encoder or change output format.
     document("main.pdf", doc)
-    asset("main.meta", yaml.encode(meta))
+    // The initial pass must emit main.pdf before its markers can be queried.
+    let ends = query(metadata.where(value: "iacrj-paper-end"))
+    // The template's boundary follows any matching markers in author content.
+    let pages = if ends.len() > 0 { ends.last().location().page() }
+    asset("main.meta", yaml.encode(meta + (pages: pages)))
     asset("main.abstract", abstract-text)
   }
 }

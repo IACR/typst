@@ -94,6 +94,12 @@ Bundle metadata lists the supplied filenames under `bibliography`. The source
 files and combined bibliography are not exported as bundle assets; how the
 publishing pipeline retrieves those files is still unresolved.
 
+Bundle metadata also includes `pages`: the number of physical pages through the
+end of the paper, including the front matter but excluding bibliography-only
+pages. A page shared by the paper and bibliography counts as a paper page.
+This uses physical page positions, not displayed page numbers; without a
+bibliography it is the paper's total page count.
+
 ## Final-version DOI and update badge
 
 The publisher supplies publication links through the `iacrmetadata` input,
