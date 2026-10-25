@@ -64,7 +64,7 @@
         (text: (size: 10pt, weight: "bold"), block: (above: 19.3pt, below: 11.4pt)),
       ),
     ),
-    
+
     // itemize/enumerate: label at 12pt, text at 25pt (\leftmargini = 2.5em),
     // \itemsep + \parsep = 8.2pt between items and around the list.
     list: (indent: 12.1pt, body-indent: 5pt, spacing: 13.2pt, marker: ([•], [–], [∗], [·])),
@@ -128,7 +128,7 @@
   <path fill-rule="evenodd" clip-rule="evenodd" d="M32 16c0 8.837-7.163 16-16 16-8.838 0-16-7.163-16-16C0 7.162 7.162 0 16 0c8.837 0 16 7.162 16 16Z" fill="#A6CE39"/>
   <path fill-rule="evenodd" clip-rule="evenodd" d="M18.813 9.637h-5.45v13.9h5.474c4.555 0 7.35-3.378 7.35-6.95 0-1.635-.562-3.372-1.77-4.704-1.215-1.336-3.065-2.246-5.605-2.246ZM18.6 21.3h-2.813v-9.425H18.5c1.823 0 3.12.552 3.96 1.4.842.849 1.252 2.021 1.252 3.312 0 .784-.239 1.967-.993 2.948-.745.969-2.01 1.765-4.119 1.765Zm5.311-4.026c-.251 1.74-1.494 4.276-5.311 4.276h-3.063H18.6c3.817 0 5.06-2.536 5.311-4.276Zm1.812-2.405c-.657-2.601-2.85-4.982-6.91-4.982h-5.2 5.2c4.06 0 6.253 2.38 6.91 4.982Zm.215 1.718ZM8.363 9.675v13.887h2.425V9.675H8.363Zm2.175 13.637H8.612h1.925ZM9.575 8.65c.84 0 1.513-.689 1.513-1.513 0-.823-.673-1.512-1.513-1.512-.838 0-1.512.674-1.512 1.513 0 .823.672 1.512 1.512 1.512Z" fill="#fff"/>
 </svg>
-  ```.text), 
+  ```.text),
   width: 0.8em,
   alt: "ORCID iD",
   format: "svg",
@@ -168,7 +168,7 @@
       "orcid: \"" + id + "\" has an invalid checksum. Check the ORCID for typos.",
     )
   }
-  
+
   let formatted = range(4).map(i => id.slice(i * 4, i * 4 + 4)).join("-")
 
   link("https://orcid.org/" + formatted, box(_orcid-icon))
@@ -393,7 +393,7 @@
       pre-transform: from-string,
     ),
   )
-  
+
   let args = z.parse(
     (
       journal: journal,
@@ -455,7 +455,7 @@
     scope: ("iacrj",),
     ctx: z.z-ctx(strict: true), // reject unknown keys, e.g. (full: .., shrot: ..)
   )
-  
+
   // Volume and number for the first-page header (\IACR@vol, \IACR@no).
   let iacr = _parse-iacrmetadata(iacrmetadata)
 
@@ -504,7 +504,7 @@
         + "\nRemove the `set " + name + "(...)` rules that change them.",
     )
   }
-  
+
   let config-checks() = context {
     check(
       text,
@@ -514,7 +514,7 @@
     check(document, config.document)
     check(par, config.par)
   }
-  
+
   set document(..config.document)
   set page(..config.page)
   set text(..config.text)
@@ -543,7 +543,7 @@
   show heading.where(level: 2): set block(..levels.at(1).block)
   show heading.where(level: 3): set text(..levels.at(2).text)
   show heading.where(level: 3): set block(..levels.at(2).block)
-  
+
   show raw: set text(..config.raw)
 
   set figure(..config.figure)
@@ -562,7 +562,7 @@
   show cite: set text(fill: config.colors.cite)
   show outline.entry: set text(fill: config.colors.link)
 
-    
+
   let meta = (
     journal: args.journal,
     version: args.version,
@@ -586,14 +586,14 @@
     front-matter
 
     // The title-block customizes spacing, so should not be checked
-    if enable-checks { 
+    if enable-checks {
       show par: it => { config-checks(); it }
       body
     } else {
       body
     }
   }
-  
+
   context {
     if target() != "bundle" {
       // regular PDF (or HTML, PNG, SVG) output
