@@ -78,14 +78,16 @@ not to the template or the calling file. The template reads and concatenates
 these files in the supplied order, then passes the combined bytes to Typst's
 native bibliography function. This lets BibTeX string aliases defined in one
 file be used in another. A References section is appended automatically; do not
-add a separate `#bibliography(...)` call. The small `src/iacrj.csl` style
+add a separate `#bibliography(...)` call. Manual calls are rejected with a
+message directing you to the template's `bibliography:` option, even with
+`enable-checks: false`. The small `src/iacrj.csl` style
 approximates the LaTeX class's `alphaurl` style: matching bracketed alphanumeric
 labels in citations and the reference list, author-sorted entries, and DOI/URL
 information. It uses Typst's native bibliography rendering; the two styles are
 not identical. Typst's built-in `alphanumeric` style supports citations only,
-so it cannot render the reference list on its own. Native bibliography
-set/show rules placed before the template's show rule can customize the
-listing's title and presentation; the citation style is set by the template.
+so it cannot render the reference list on its own. The template fixes the
+bibliography style and requires citations to inherit it; changing either with
+set rules or explicit element arguments is rejected when checks are enabled.
 Omitting the option (or supplying `()`) adds no bibliography.
 
 Bundle metadata lists the supplied filenames under `bibliography`. The source
@@ -231,3 +233,18 @@ Each test is a directory with a `test.typ`:
   with tytanic's `catch` to check error messages.
 
 Create a new test with `tt new <name>` (add `-C` for a compile-only test).
+
+Layout-time style-check failures require a separate compiler invocation, since
+`catch` only catches evaluation-time errors. Run their regression checks with:
+
+```sh
+python3 tests/style-checks/check.py
+```
+
+These checks require the `typst` CLI and the same fonts as the main suite, and
+also run in CI. They verify that template-owned set-rule changes and explicit
+citation style overrides are rejected, and that the existing
+`enable-checks: false` escape hatch still works for style checks. Manual
+bibliography calls are rejected independently of that switch, whether or not
+sources were supplied through the template option. The checks are diagnostics,
+not a security boundary: arbitrary replacement show rules can bypass them.

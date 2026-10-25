@@ -22,6 +22,7 @@ jobs:
     env:
       # tytanic 0.4.1 is built with Typst 0.15.1 (see README.md).
       TYTANIC_VERSION: 0.4.1
+      TYPST_VERSION: 0.15.1
     steps:
       - uses: actions/checkout@v5
 
@@ -33,6 +34,11 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           "$HOME/.local/bin/tt" --version
 
+      - name: Install Typst for layout-time style checks
+        run: |
+          curl -sSfL "https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/typst-x86_64-unknown-linux-musl.tar.xz" \
+            | tar -xJ --strip-components=1 -C "$HOME/.local/bin" --wildcards '*/typst'
+
       # The reference images use New Computer Modern, including the sans and
       # mono variants, which are not embedded in Typst.
       - name: Download New Computer Modern fonts
@@ -42,3 +48,8 @@ jobs:
 
       - name: Run tests
         run: tt run --no-fail-fast --font-path "$RUNNER_TEMP/fonts"
+
+      - name: Check style override failures
+        env:
+          TYPST_FONT_PATHS: ${{ runner.temp }}/fonts
+        run: python3 tests/style-checks/check.py

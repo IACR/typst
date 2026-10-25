@@ -114,6 +114,11 @@
     par: (leading: 3.9pt),
   ),
 
+  // Use one style for citations and their reference-list labels. The built-in
+  // alphanumeric style supports citations only, so a small CSL defines both.
+  bibliography: (style: read("iacrj.csl", encoding: none)),
+  cite: (style: auto),
+
   // hyperref colorlinks for journal=cic
   colors: (
     url: rgb(0, 0, 255), // urlcolor=blue
@@ -781,16 +786,20 @@
     crossmark-date: iacr.crossmark-date,
   )
 
-  let check(elem, config) = {
-    let name = repr(elem)
-    let get(key) = eval("e => e." + key)(elem)
+  let check(elem, config, actual: none, name: none) = {
+    let name = if name == none { repr(elem) } else { name }
+    let get(key) = if actual == none {
+      eval("e => e." + key)(elem)
+    } else {
+      actual.at(key)
+    }
     let changed = config.keys().filter(k => get(k) != config.at(k))
     if changed == () { return }
 
     let describe(k) = {
       let field = "`" + name + "." + k + "`"
-      if type(config.at(k)) == content {
-        // e.g. the header: printing the content itself isn't helpful
+      if type(config.at(k)) in (content, bytes) {
+        // Headers and CSL data are not useful to print in an error message.
         field + " was changed"
       } else {
         (
@@ -806,9 +815,9 @@
     panic(
       "The iacrj template does not allow changing these settings:\n"
         + changed.map(k => "  - " + describe(k)).join("\n")
-        + "\nRemove the `set "
+        + "\nRemove the conflicting `set "
         + name
-        + "(...)` rules that change them.",
+        + "(...)` rules or explicit element arguments.",
     )
   }
 
@@ -822,12 +831,29 @@
     check(page, config.page)
     check(document, config.document)
     check(par, config.par)
+    check(list, config.list)
+    check(enum, config.enum)
+    check(heading, (numbering: config.heading.numbering))
+    check(figure, config.figure)
+    check(footnote.entry, config.footnote.entry, name: "footnote.entry")
+    check(std.bibliography, config.bibliography)
+    check(cite, config.cite)
   }
 
   set document(..config.document)
   set page(..config.page)
   set text(..config.text)
   set par(..config.par)
+  set std.bibliography(..config.bibliography)
+  set cite(..config.cite)
+
+  // Also check explicit citation style arguments, not just set rules.
+  show cite: it => if enable-checks {
+    context {
+      check(cite, config.cite, actual: it)
+      it
+    }
+  } else { it }
 
   set list(..config.list)
   set enum(..config.enum)
@@ -904,7 +930,15 @@
     keywords: args.keywords,
   )
 
-  let doc = {
+  let paper = {
+    // This rule covers author content only; the template's bibliography is
+    // appended outside this scope. Source filenames are required for metadata,
+    // so manual calls are rejected even when style checks are disabled.
+    show std.bibliography: _ => panic(
+      "iacrj: do not call bibliography(...) manually. "
+        + "Pass your BibTeX filenames with the iacrj bibliography option instead, "
+        + "e.g. bibliography: (\"references.bib\",).",
+    )
     front-matter
 
     // The title-block customizes spacing, so should not be checked
@@ -917,9 +951,11 @@
     } else {
       body
     }
+  }
+  let doc = {
+    paper
     if args.bibliography.len() > 0 {
-      // The built-in alphanumeric style only supports citations, not a listing.
-      std.bibliography(bibliography-source, style: "iacrj.csl")
+      std.bibliography(bibliography-source)
     }
   }
 
