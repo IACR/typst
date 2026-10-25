@@ -217,7 +217,8 @@
   }
   // All `context` blocks compare equal, so a user's `context` header would
   // pass the check. The metadata marker makes the template's header unique.
-  [#metadata("iacrj-header")#context {
+  metadata("iacrj-header")
+  context {
     let n = counter(page).get().first()
     if here().page() == 1 {
       if version != "final" { return }
@@ -255,7 +256,7 @@
       dy: config.header-rule.gap,
       line(length: 100%, stroke: config.header-rule.stroke),
     )
-  }]
+  }
 }
 
 /// Render the title, authors, affiliations, abstract and keywords.
