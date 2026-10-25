@@ -95,8 +95,8 @@
     ),
 
     // \maketitle of metacapture (maketitle=iacrj), abstract and keywords.
-    // `gap` is the space above each part; together they reproduce the
-    // baselines of iacrj-doc.pdf.
+    // `gap` controls stack spacing or the space above a flow block.
+    // Values approximate the baselines of iacrj-doc.pdf.
     title-block: (
       // \LARGE\bfseries\sffamily: 17.28pt on 22pt
       title: (gap: 36.8pt, text: (size: 17.28pt, font: sans, weight: "bold"), leading: 9.9pt),
@@ -111,7 +111,7 @@
       // article abstract: \small, quotation margins 2.5em, indent 1.5em
       abstract: (
         gap: 29.8pt,
-        heading-gap: 4.6pt,
+        heading-gap: 9.3pt,
         text: (size: 9pt),
         par: (leading: 4.7pt, spacing: 4.7pt, justify: true, first-line-indent: (amount: 1.5em, all: false)),
         margin: 25pt,
@@ -402,49 +402,55 @@
   }
 
   set par(justify: false, first-line-indent: 0pt)
-  // Only the outer blocks use `gap` for spacing. A set rule here would
-  // also remove spacing around display equations inside the abstract.
-  let block = block.with(spacing: 0pt)
-  align(center, {
-    v(tb.title.gap)
-    block({
-      set par(leading: tb.title.leading)
-      // The emails footnote has no marker. Footnotes are listed in document
-      // order, so placing it at the title puts it before the author footnotes.
-      if emails.len() > 0 {
-        let label = if emails.len() == 1 { "Email: " } else { "Emails: " }
-        footnote(numbering: n => none, label + emails.join(", "))
-        counter(footnote).update(0) // so author footnotes start at a
-      }
-      text(..tb.title.text, title)
-    })
-    v(tb.authors.gap)
-    block({
-      set par(leading: tb.authors.leading)
-      text(..tb.authors.text, author-names.join(", ", last: " and "))
-    })
-    if affiliation-lines.len() > 0 {
-      v(tb.affiliations.gap)
+  let title-content = block({
+    set par(leading: tb.title.leading)
+    text(..tb.title.text, title)
+  })
+  let author-content = block({
+    set par(leading: tb.authors.leading)
+    // Emit the unmarked email note before the names and their author notes.
+    if emails.len() > 0 {
+      footnote(numbering: n => none, {
+        if emails.len() == 1 { "Email: " } else { "Emails: " }
+        emails.join(", ")
+      })
+      counter(footnote).update(0) // so author footnotes start at a
+    }
+    text(..tb.authors.text, author-names.join(", ", last: " and "))
+  })
+  let affiliation-content = if affiliation-lines.len() > 0 {
+    (
+      tb.affiliations.gap,
       block({
         set text(..tb.affiliations.text)
         set par(leading: tb.affiliations.leading)
         affiliation-lines.join(linebreak())
-      })
-    }
-  })
+      }),
+    )
+  } else { () }
+
+  align(center, stack(
+    dir: ttb,
+    tb.title.gap,
+    title-content,
+    tb.authors.gap,
+    author-content,
+    ..affiliation-content,
+  ))
+  // Keep the abstract in normal flow: a stack cannot break across pages.
   if abstract != none {
-    v(tb.abstract.gap)
-    block({
+    block(width: 100%, above: tb.abstract.gap, {
       set text(..tb.abstract.text)
       set par(..tb.abstract.par)
-      align(center, strong[Abstract])
-      v(tb.abstract.heading-gap)
+      block(width: 100%, below: tb.abstract.heading-gap, {
+        set align(center)
+        strong[Abstract]
+      })
       pad(x: tb.abstract.margin, abstract)
     })
   }
   if keywords.len() > 0 {
-    v(tb.keywords.gap)
-    block[#text(..tb.keywords.label)[Keywords:]~#keywords.join(", ")]
+    block(above: tb.keywords.gap)[#text(..tb.keywords.label)[Keywords:]~#keywords.join(", ")]
   }
   // Author and email footnotes don't count: the paper's first footnote is 1.
   counter(footnote).update(0)

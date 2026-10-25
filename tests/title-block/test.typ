@@ -40,7 +40,15 @@
 }
 
 Body.#footnote[The body footnote starts at 1.]
-#context assert.eq(counter(footnote).get(), (1,))
+#context {
+  assert.eq(counter(footnote).get(), (1,))
+  // Moving the email note into the author block must preserve note order.
+  assert.eq(query(footnote).map(it => it.body), (
+    [#("Email: alice@example.org (Alice)")],
+    [Author note.],
+    [The body footnote starts at 1.],
+  ))
+}
 
 #pagebreak()
 #title-block(
