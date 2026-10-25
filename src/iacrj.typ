@@ -145,11 +145,12 @@
 /// metacapture.sty (used by iacrj.cls): the "authenticated" logo, sitting on
 /// the baseline with a 0.2em gap after the author name and affiliation marks.
 /// The default height matches the cap height of the 12pt New Computer Modern authors.
+/// `alt` describes the linked record to assistive technology.
 ///
 /// Accepts e.g. "0000-0002-1825-0097", "0000 0002 1825 0097",
 /// "0000000218250097", "https://orcid.org/0000-0002-1825-0097",
 /// "orcid.org/0000-0002-1825-009x". Panics on malformed IDs and wrong checksums.
-#let orcid(id, height: 8.2pt, hor-margin: 0.2em) = {
+#let orcid(id, height: 8.2pt, hor-margin: 0.2em, alt: "ORCID iD") = {
   assert(
     type(id) == str,
     message: "orcid: expected a string like \"0000-0002-1825-0097\", got " + repr(type(id)),
@@ -173,7 +174,7 @@
 
   // metacapture uses a 0.2em gap in other author layouts; keep the spacing
   // here rather than relying on a literal space at each call site.
-  link("https://orcid.org/" + formatted, box(inset: (left: hor-margin), _orcid-icon(height: height)))
+  link("https://orcid.org/" + formatted, box(inset: (left: hor-margin), _orcid-icon(height: height, alt: alt)))
 }
 
 
@@ -388,7 +389,7 @@
       if show-inst and a.inst != none { super[,] }
       footnote(numbering: "a", a.footnote)
     }
-    if a.orcid != none { orcid(a.orcid) }
+    if a.orcid != none { orcid(a.orcid, alt: "ORCID record for " + a.name) }
   })) }
   let affiliation-lines = if anonymous { () } else { affiliations.enumerate().map(((i, aff)) => {
     if show-inst {
@@ -404,7 +405,8 @@
   set par(justify: false, first-line-indent: 0pt)
   let title-content = block({
     set par(leading: tb.title.leading)
-    text(..tb.title.text, title)
+    show std.title: it => text(..tb.title.text, it.body)
+    std.title(title)
   })
   let author-content = block({
     set par(leading: tb.authors.leading)
@@ -444,7 +446,8 @@
       set par(..tb.abstract.par)
       block(width: 100%, below: tb.abstract.heading-gap, {
         set align(center)
-        strong[Abstract]
+        show heading: it => text(..tb.abstract.text, weight: "bold", it.body)
+        heading(level: 1, numbering: none, outlined: false, [Abstract])
       })
       pad(x: tb.abstract.margin, abstract)
     })
@@ -574,6 +577,7 @@
   config.document = (
     title: [#full-title],
     author: if anonymous { ("hidden for submission",) } else { author-names },
+    keywords: args.keywords,
     description: if args.version == "final" {
       [#(journal.name + if iacr.doi != none { ", DOI: " + iacr.doi } else { "" })]
     },

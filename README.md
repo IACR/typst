@@ -57,6 +57,26 @@ the PDF's last major version—normally its publication date, or the date of a
 significant in-place correction. It is never inferred from the compilation date.
 Without it, the DOI link is still rendered but the Crossmark badge is omitted.
 
+## Accessibility
+
+The template uses native Typst elements for the visible document title, abstract
+heading, section headings, figures, captions, lists, and footnotes. Document
+metadata includes the title, authors, and keywords. Author ORCID links have
+person-specific alternative descriptions. Styling these elements does not remove
+their semantics.
+
+For accessible output, keep using native elements in the paper itself. Supply
+alternative descriptions for meaningful images and mathematics, and use
+`table.header` for table headings. Typst's
+[accessibility guide](https://typst.app/docs/guides/accessibility/) describes the
+remaining author responsibilities.
+
+The semantic regression fixture can also be checked with stricter export rules:
+
+```sh
+typst compile --root . --pdf-standard ua-1,a-2a tests/accessibility/test.typ accessibility.pdf
+```
+
 ## Dependencies
 
 * **Typst** and the **New Computer Modern** fonts, as described above.

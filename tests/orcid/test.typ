@@ -23,6 +23,9 @@
 
 // The default icon height is fixed; only its 0.2em left inset scales with text.
 #assert.eq(orcid(canonical).body.inset, (left: 0.2em))
+#let described = orcid(canonical, alt: "ORCID record for Alice")
+#assert.eq(described.dest, canonical)
+#assert.eq(described.body.body.alt, "ORCID record for Alice")
 #for size in (9pt, 10pt, 12pt) {
   block({
     set text(size: size)
