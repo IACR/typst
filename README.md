@@ -128,14 +128,14 @@ The output filenames are fixed, independently of the input filename:
 | `authors` | Validated author records, including affiliation keys in `inst`. |
 | `affiliations` | Validated affiliation records keyed by the supplied identifiers, in display order. |
 | `bibliography` | The supplied BibTeX filenames, normalized to a list and kept in input order. Empty when no sources are configured. |
+| `keywords` | The supplied keywords, as a list. |
 | `pages` | The number of physical pages through the end of the paper, excluding bibliography-only pages. |
 | `doi`, `crossmark-date`, `crossmark-url` | Present only for `version: "final"`. Unavailable values are null; the Crossmark URL requires both a DOI and a Crossmark date. |
 
 The `pages` count includes front matter. A page shared by the paper and its
 bibliography counts as a paper page. This uses physical page positions, not the
 page counter or displayed page numbers; without a bibliography it is the paper's
-total page count. Keywords are included in the PDF metadata but are not currently
-written to `main.meta`.
+total page count.
 
 Anonymous submissions have an empty author list and affiliation dictionary in
 `main.meta`; `notanonymous: true` disables that redaction. The abstract is
@@ -146,6 +146,20 @@ The bundle does **not** include the Typst source files, original BibTeX files,
 or concatenated bibliography data. It is therefore not a self-contained source
 archive. Delivery of the referenced BibTeX files to the publishing pipeline is
 still unresolved. Ordinary PDF compilation does not emit the metadata sidecars.
+
+### Querying the metadata
+
+The same record is available without bundle export: the template places it in
+the document as a `metadata` element labeled `<iacrj-meta>`, so `typst eval`
+can extract it as JSON (or YAML with `--format yaml`):
+
+```sh
+typst eval --in src/example.typ 'query(<iacrj-meta>).first().value' --pretty
+typst eval --in src/example.typ 'query(<iacrj-meta>).first().value.title.full'
+```
+
+It has the fields of `main.meta` plus `abstract`, the abstract's Typst markup
+string. `pages` is null for HTML output.
 
 ## Development escape hatch
 
@@ -169,9 +183,9 @@ the journal's required style.
 
 ## Final-version DOI and update badge
 
-The publisher supplies publication links through the `iacrmetadata` input,
-not through author-facing template arguments. For example, a metadata file can
-contain:
+The publisher supplies publication links in a metadata file named by the
+`iacrmetadata` input, not through author-facing template arguments. For example,
+a metadata file can contain:
 
 ```text
 volume=3
@@ -180,6 +194,18 @@ doi=10.62056/a66c0l2hd
 crossmark-date=2026-07-24
 
 ```
+
+Name the file relative to the project root (`src/` for the included example):
+
+```sh
+typst compile --input iacrmetadata=main.iacrmetadata src/example.typ
+```
+
+Without the input, the paper compiles without a volume, number, DOI or badge.
+Typst cannot test whether a file exists, so a named file that is missing is a
+compilation error. Each line is `key=value`; blank lines and unknown keys are
+ignored, but a repeated key, a quoted value, a non-numeric volume or number, or
+a malformed DOI or date stops compilation with an error.
 
 Use the DOI identifier, not its `https://doi.org/` URL. In `version: "final"`,
 the DOI appears in the first-page header and PDF description (subject), and the
