@@ -199,6 +199,65 @@
   (volume: integer("volume"), number: integer("number"))
 }
 
+/// Render the first-page journal header and subsequent running heads.
+/// `journal` is a dictionary with `name` and `issn`; authors are normalized
+/// metadata dictionaries. An empty author list produces an anonymous running head.
+#let page-header(
+  journal,
+  title: "",
+  authors: (),
+  version: "preprint",
+  volume: none,
+  number: none,
+) = {
+  let author-running = if authors.len() == 0 {
+    "Anonymous Submission to " + journal.name
+  } else {
+    authors.map(a => a.name).join(", ")
+  }
+  // All `context` blocks compare equal, so a user's `context` header would
+  // pass the check. The metadata marker makes the template's header unique.
+  [#metadata("iacrj-header")#context {
+    let n = counter(page).get().first()
+    if here().page() == 1 {
+      if version != "final" { return }
+      // Journal name and issue on the left. The header ends at the baseline
+      // of its last line, like the running head.
+      set text(..config.first-page-header.text)
+      set par(leading: config.first-page-header.leading)
+      let pages = counter(page).final().first()
+      let issue = (
+        [ISSN~#journal.issn],
+        if volume != none [Vol.~#volume],
+        if number != none [No.~#number],
+        [#pages~#if pages == 1 [page.] else [pages.]],
+      ).filter(x => x != none)
+      move(dy: config.first-page-header.dy, {
+        journal.name
+        linebreak()
+        issue.join[, ]
+      })
+      return
+    }
+    if calc.odd(n) {
+      author-running
+      h(1fr)
+      counter(page).display()
+    } else {
+      counter(page).display()
+      h(1fr)
+      title
+    }
+    // The header ends at its baseline (text.bottom-edge is 0pt), so the rule
+    // is placed relative to that. The header is as wide as the text.
+    place(
+      bottom + left,
+      dy: config.header-rule.gap,
+      line(length: 100%, stroke: config.header-rule.stroke),
+    )
+  }]
+}
+
 /// Render the title, authors, affiliations, abstract and keywords.
 /// Authors and affiliations are the normalized metadata dictionaries used by
 /// `iacrj`; the abstract is rendered content, or `none` to omit it.
@@ -407,55 +466,21 @@
   // running head, PDF metadata and bundle metadata (iacrj.cls's anonymous mode).
   let anonymous = args.version == "submission" and not args.notanonymous
   let author-names = args.authors.map(a => a.name)
-  let author-running = if anonymous { "Anonymous Submission to " + journal.name } else { author-names.join(", ") }
 
   config.document = (
     title: [#full-title],
     author: if anonymous { ("hidden for submission",) } else { author-names },
   )
-  // All `context` blocks compare equal, so a user's `context` header would
-  // pass the check. The metadata marker makes the template's header unique.
-  config.page.header = [#metadata("iacrj-header")#context {
-    let n = counter(page).get().first()
-    if here().page() == 1 {
-      if args.version != "final" { return }
-      // Journal name and issue on the left. The header ends at the baseline
-      // of its last line, like the running head.
-      set text(..config.first-page-header.text)
-      set par(leading: config.first-page-header.leading)
-      let pages = counter(page).final().first()
-      let issue = (
-        [ISSN~#journal.issn],
-        if iacr.volume != none [Vol.~#iacr.volume],
-        if iacr.number != none [No.~#iacr.number],
-        [#pages~#if pages == 1 [page.] else [pages.]],
-      ).filter(x => x != none)
-      move(dy: config.first-page-header.dy, {
-        journal.name
-        linebreak()
-        issue.join[, ]
-      })
-      return
-    }
-    if calc.odd(n) {
-      author-running
-      h(1fr)
-      counter(page).display()
-    } else {
-      counter(page).display()
-      h(1fr)
-      short-title
-    }
-    // The header ends at its baseline (text.bottom-edge is 0pt), so the rule
-    // is placed relative to that. The header is as wide as the text.
-    place(
-      bottom + left,
-      dy: config.header-rule.gap,
-      line(length: 100%, stroke: config.header-rule.stroke),
-    )
-  }]
-  
-  
+  config.page.header = page-header(
+    journal,
+    title: short-title,
+    authors: if anonymous { () } else { args.authors },
+    version: args.version,
+    volume: iacr.volume,
+    number: iacr.number,
+  )
+
+
   let check(elem, config) = {
     let name = repr(elem)
     let get(key) = eval("e => e." + key)(elem)
