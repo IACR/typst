@@ -79,7 +79,7 @@
       <key variable="title"/>
     </sort>
     <layout suffix=".">
-      <text macro="label" prefix="[" suffix="]"/>
+      <text variable="citation-label" prefix="[" suffix="]"/>
       <group delimiter=". ">
         <text macro="author"/>
         <choose>
