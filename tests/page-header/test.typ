@@ -9,7 +9,7 @@
   authors: ((name: "Alice"), (name: "Bob")),
   version: "final",
   volume: 5,
-  number: 3,
+  issue: 3,
 ))
 
 // Record rendered header text, including content produced inside context blocks.

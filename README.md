@@ -56,7 +56,7 @@ omitted with a single author or a single affiliation.
 A string value such as `uni-a: "University A"` is shorthand for a record with
 only a `name`. Every referenced key must exist. Affiliation arrays and numeric
 `inst` references are no longer accepted. Anonymous submissions omit authors
-and affiliations from both the front matter and bundle metadata.
+and affiliations from both the front matter and the queried metadata.
 
 ## Bibliography
 
@@ -90,47 +90,43 @@ bibliography style and requires citations to inherit it; changing either with
 set rules or explicit element arguments is rejected when checks are enabled.
 Omitting the option (or supplying `()`) adds no bibliography.
 
-The supplied filenames are recorded in the [bundle metadata](#bundle-output).
-The source files and combined bibliography are not exported as bundle assets;
-how the publishing pipeline retrieves those files is still unresolved.
+The supplied filenames are recorded in the [paper's metadata](#paper-metadata).
+The source files and combined bibliography are not part of it; how the
+publishing pipeline retrieves those files is still unresolved.
 
-## Bundle output
+## Paper metadata
 
-Bundle export produces the PDF and accompanying machine-readable metadata in
-one output directory. From the repository root, try the included example:
+The template places the paper's machine-readable metadata in the document as
+a `metadata` element labeled `<iacrj-meta>`, so the publishing pipeline can
+query it as JSON (or YAML with `--format yaml`) instead of extracting it from
+the PDF. From the repository root, try the included example:
 
 ```sh
-typst compile --features bundle --format bundle src/example.typ example-bundle
+typst query src/example.typ '<iacrj-meta>' --field value --one
+typst eval --in src/example.typ 'query(<iacrj-meta>).first().value.title.full'
 ```
 
-Typst uses `src/` as the project root for this command, matching the example's
-bibliography paths. For your own paper, replace the input and output paths and
-set `--root` if needed. Typst's bundle export is experimental, requires the
-`bundle` feature flag, and is currently available only in the CLI. Its behavior
-and this template's metadata format may change; this is not yet a finalized
-journal submission format.
+Typst uses `src/` as the project root for these commands, matching the
+example's bibliography paths. Pass the same `--input` options (such as
+`iacrmetadata=...`) as for `typst compile`, since the query compiles the paper
+separately and the two must agree.
 
-The output filenames are fixed, independently of the input filename:
-
-| File | Contents |
-| --- | --- |
-| `main.pdf` | The formatted paper, including the automatically appended bibliography when configured. |
-| `main.meta` | UTF-8 metadata serialized using Typst's `yaml.encode`, with the fields below. |
-| `main.abstract` | The abstract's original Typst markup string, not extracted PDF text or a rendered abstract. Empty when no abstract is supplied. |
-
-`main.meta` currently contains:
+The record contains:
 
 | Field | Meaning |
 | --- | --- |
 | `journal`, `version` | The selected journal and document version. |
-| `volume`, `number` | Journal issue metadata supplied by the publisher, or the template defaults. |
+| `volume`, `issue` | Journal issue metadata supplied by the publisher, or null. |
 | `title` | A record with `full` and `short` title strings. |
 | `authors` | Validated author records, including affiliation keys in `inst`. |
 | `affiliations` | Validated affiliation records keyed by the supplied identifiers, in display order. |
 | `bibliography` | The supplied BibTeX filenames, normalized to a list and kept in input order. Empty when no sources are configured. |
 | `keywords` | The supplied keywords, as a list. |
-| `pages` | The number of physical pages through the end of the paper, excluding bibliography-only pages. |
+| `license` | The SPDX license identifier, or null when none is given. |
+| `pages` | The number of physical pages through the end of the paper, excluding bibliography-only pages. Null for HTML output. |
+| `abstract` | The abstract's original Typst markup string, not extracted PDF text or a rendered abstract. Empty when no abstract is supplied. |
 | `doi`, `crossmark-date`, `crossmark-url` | Present only for `version: "final"`. Unavailable values are null; the Crossmark URL requires both a DOI and a Crossmark date. |
+| `date-received`, `date-accepted`, `date-revised`, `date-final` | Present only for `version: "final"`; the publisher's dates, or null. |
 
 The `pages` count includes front matter. A page shared by the paper and its
 bibliography counts as a paper page. This uses physical page positions, not the
@@ -138,28 +134,13 @@ page counter or displayed page numbers; without a bibliography it is the paper's
 total page count.
 
 Anonymous submissions have an empty author list and affiliation dictionary in
-`main.meta`; `notanonymous: true` disables that redaction. The abstract is
+the metadata; `notanonymous: true` disables that redaction. The abstract is
 preserved verbatim, so authors must remove identifying information from it and
 from the paper's prose themselves.
 
-The bundle does **not** include the Typst source files, original BibTeX files,
-or concatenated bibliography data. It is therefore not a self-contained source
-archive. Delivery of the referenced BibTeX files to the publishing pipeline is
-still unresolved. Ordinary PDF compilation does not emit the metadata sidecars.
-
-### Querying the metadata
-
-The same record is available without bundle export: the template places it in
-the document as a `metadata` element labeled `<iacrj-meta>`, so `typst eval`
-can extract it as JSON (or YAML with `--format yaml`):
-
-```sh
-typst eval --in src/example.typ 'query(<iacrj-meta>).first().value' --pretty
-typst eval --in src/example.typ 'query(<iacrj-meta>).first().value.title.full'
-```
-
-It has the fields of `main.meta` plus `abstract`, the abstract's Typst markup
-string. `pages` is null for HTML output.
+The metadata does **not** include the Typst source files, original BibTeX
+files, or concatenated bibliography data. Delivery of the referenced BibTeX
+files to the publishing pipeline is still unresolved.
 
 ## Development escape hatch
 
@@ -181,6 +162,33 @@ through the `bibliography:` option. Restore `enable-checks: true`, or remove the
 option, before submission. This is a development aid, not permission to change
 the journal's required style.
 
+## License and first-page footer
+
+The `license` option takes an SPDX identifier. Only these Creative Commons
+licenses are supported: `CC-BY-4.0`, `CC-BY-SA-4.0`, `CC-BY-ND-4.0`,
+`CC-BY-NC-4.0`, `CC-BY-NC-SA-4.0`, `CC-BY-NC-ND-4.0` and `CC0-1.0`.
+`version: "final"` requires a license, as `\license` does in iacrj.cls.
+
+```typ
+#show: iacrj.with(
+  journal: "cic",
+  license: "CC-BY-4.0",
+  // ...
+)
+```
+
+As in iacrj.cls, preprints and final versions show the license on the first
+page's footer, linked to the license deed, with its Creative Commons badge
+on the right. Submissions don't show it. A final version also shows, on the
+next line, the dates from the publisher's iacrmetadata (below): Received,
+Accepted, Revised and Final version, from `date-received`, `date-accepted`,
+`date-revised` and `date-final`. Revised and Final version are left out when
+their dates are missing. The footer is the same for all journals. Unlike
+iacrj.cls, preprints have no "Date of this document" line.
+
+The footer is placed in the bottom margin as part of the document, not as
+the page footer, because PDF/UA does not allow links in page footers.
+
 ## Final-version DOI and update badge
 
 The publisher supplies publication links in a metadata file named by the
@@ -189,9 +197,13 @@ a metadata file can contain:
 
 ```text
 volume=3
-number=2
+issue=2
 doi=10.62056/a66c0l2hd
 crossmark-date=2026-07-24
+date-received=2026-03-01
+date-accepted=2026-06-02
+date-revised=2026-06-20
+date-final=2026-07-24
 
 ```
 
@@ -201,15 +213,19 @@ Name the file relative to the project root (`src/` for the included example):
 typst compile --input iacrmetadata=main.iacrmetadata src/example.typ
 ```
 
-Without the input, the paper compiles without a volume, number, DOI or badge.
+Without the input, the paper compiles without a volume, issue, DOI or badge.
 Typst cannot test whether a file exists, so a named file that is missing is a
-compilation error. Each line is `key=value`; blank lines and unknown keys are
-ignored, but a repeated key, a quoted value, a non-numeric volume or number, or
+compilation error. A supplied file must have `date-received` and
+`date-accepted`; `date-revised` and `date-final` are optional. All dates use
+the `YYYY-MM-DD` format, and they must be in order: received ≤ accepted ≤
+final, and received ≤ revised ≤ final (a revision may come before or after
+acceptance). Each line is `key=value`; blank lines and unknown keys are
+ignored, but a repeated key, a quoted value, a non-numeric volume or issue, or
 a malformed DOI or date stops compilation with an error.
 
 Use the DOI identifier, not its `https://doi.org/` URL. In `version: "final"`,
 the DOI appears in the first-page header and PDF description (subject), and the
-DOI, Crossmark date, and update URL are included in the bundle metadata. Preprints and submissions
+DOI, Crossmark date, and update URL are included in the paper's metadata. Preprints and submissions
 do not expose these publication links.
 
 For CiC, the DOI URL is right-aligned above the linked “Check for updates” badge,
@@ -249,6 +265,9 @@ typst compile --root . --pdf-standard ua-1,a-2a tests/accessibility/test.typ acc
 * The **[valkyrie](https://typst.app/universe/package/valkyrie)** package,
   which the template uses to check its arguments. Typst downloads it
   automatically the first time you compile, so there is nothing to install.
+* The **[ccicons](https://typst.app/universe/package/ccicons)** package,
+  which provides the Creative Commons images in the first-page footer. It
+  is downloaded the same way.
 * **[tytanic](https://github.com/typst-community/tytanic)** (the `tt`
   command), which is only needed to run the tests in `tests/`, not to use
   the template. Use a release that is built with the same Typst version

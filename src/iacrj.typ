@@ -1,4 +1,5 @@
 #import "@preview/valkyrie:0.2.2" as z
+#import "@preview/ccicons:1.0.1": ccicon
 
 // Fonts. New Computer Modern is bundled with Typst; the sans and mono
 // variants (closest to Latin Modern Sans/Mono) must be installed.
@@ -46,6 +47,16 @@
     leading: 4.7pt,
     dy: 8.5pt,
     updates-gap: 2pt,
+  ),
+  // First-page footer (fancypagestyle title): \small, 9pt on 11pt, plus the
+  // .1em after the license line. The first baseline is \footskip (30pt)
+  // below the text block; CiC's taller badge pushes the footer down a line.
+  // The badge is 4em wide (doclicense imagewidth=4em).
+  first-page-footer: (
+    text: (size: 9pt),
+    leading: 5.6pt,
+    first-baseline: (cic: 41.9pt, other: 30pt),
+    image: (format: "badge", height: 1.4em),
   ),
   // Rule under the running head, across the text width (pages 2+).
   // `gap` is the distance below the header baseline.
@@ -257,12 +268,14 @@
 ```.text
 
 // Sanity-check a yyyy-mm-dd date string.
-#let _validate-date(value) = {
+#let _validate-date(value, key: "crossmark-date") = {
   if (
     type(value) != str or value.match(regex("^\\d{4}-\\d{2}-\\d{2}$")) == none
   ) {
     panic(
-      "iacrj: invalid crossmark-date; expected YYYY-MM-DD, got "
+      "iacrj: invalid "
+        + key
+        + "; expected YYYY-MM-DD, got "
         + repr(value)
         + ".",
     )
@@ -310,12 +323,15 @@
 
 /// Parses the journal metadata that the publisher supplies for the final
 /// version (\jobname.iacrmetadata in iacrj.cls): one `key=value` per line,
-/// e.g. "volume=5\nnumber=3". Optional `doi` and `crossmark-date` fields supply
-/// final-version links; the date identifies the PDF's last major version.
-/// Blank lines and unknown keys are ignored, so
-/// the publisher can add keys before the template uses them. Values are
-/// unquoted and each key may appear only once.
+/// e.g. "date-received=2026-03-01\ndate-accepted=2026-08-01". A supplied
+/// file must have `date-received` and `date-accepted`; `none` means no file.
+/// Optional `doi` and `crossmark-date` fields supply final-version links; the
+/// date identifies the PDF's last major version. Blank lines and unknown keys
+/// are ignored, so the publisher can add keys before the template uses them.
+/// Values are unquoted and each key may appear only once.
 #let _parse-iacrmetadata(text) = {
+  let supplied = text != none
+  let text = if supplied { text } else { "" }
   let values = (:)
   for line in text.split("\n").map(str.trim).filter(line => line != "") {
     let parts = line.split("=")
@@ -373,15 +389,154 @@
         + "\".",
     )
   }
-  let crossmark-date = optional("crossmark-date")
-  (
-    volume: integer("volume"),
-    number: integer("number"),
-    doi: doi,
-    crossmark-date: if crossmark-date != none {
-      _validate-date(crossmark-date)
-    },
+  let date(key) = {
+    let value = optional(key)
+    if value != none { _validate-date(value, key: key) }
+  }
+  let dates = (
+    date-received: date("date-received"),
+    date-accepted: date("date-accepted"),
+    date-revised: date("date-revised"),
+    date-final: date("date-final"),
   )
+  // Received <= accepted <= final, and received <= revised <= final; the
+  // revised date may come before or after acceptance. Validated YYYY-MM-DD
+  // strings sort like the dates; a pair with a missing date is skipped.
+  for (earlier, later) in (
+    ("date-received", "date-accepted"),
+    ("date-accepted", "date-final"),
+    ("date-received", "date-final"),
+    ("date-received", "date-revised"),
+    ("date-revised", "date-final"),
+  ) {
+    if dates.at(earlier) == none or dates.at(later) == none { continue }
+    if dates.at(earlier) > dates.at(later) {
+      panic(
+        "iacrj: iacrmetadata "
+          + earlier
+          + " ("
+          + dates.at(earlier)
+          + ") must not be after "
+          + later
+          + " ("
+          + dates.at(later)
+          + ").",
+      )
+    }
+  }
+  let result = (
+    volume: integer("volume"),
+    issue: integer("issue"),
+    doi: doi,
+    crossmark-date: date("crossmark-date"),
+    ..dates,
+  )
+  // Checked last, so that a malformed value reports its own error first.
+  let missing = ("date-received", "date-accepted").filter(key => (
+    dates.at(key) == none
+  ))
+  if supplied and missing.len() > 0 {
+    panic("iacrj: iacrmetadata must have " + missing.join(" and ") + ".")
+  }
+  result
+}
+
+// The supported licenses, keyed by SPDX identifier: the ccicons image, the
+// doclicense short name and the Creative Commons deed.
+#let _licenses = (
+  "CC-BY-4.0": (icon: "cc-by", name: "CC BY 4.0", path: "licenses/by/4.0/"),
+  "CC-BY-SA-4.0": (
+    icon: "cc-by-sa",
+    name: "CC BY-SA 4.0",
+    path: "licenses/by-sa/4.0/",
+  ),
+  "CC-BY-ND-4.0": (
+    icon: "cc-by-nd",
+    name: "CC BY-ND 4.0",
+    path: "licenses/by-nd/4.0/",
+  ),
+  "CC-BY-NC-4.0": (
+    icon: "cc-by-nc",
+    name: "CC BY-NC 4.0",
+    path: "licenses/by-nc/4.0/",
+  ),
+  "CC-BY-NC-SA-4.0": (
+    icon: "cc-by-nc-sa",
+    name: "CC BY-NC-SA 4.0",
+    path: "licenses/by-nc-sa/4.0/",
+  ),
+  "CC-BY-NC-ND-4.0": (
+    icon: "cc-by-nc-nd",
+    name: "CC BY-NC-ND 4.0",
+    path: "licenses/by-nc-nd/4.0/",
+  ),
+  "CC0-1.0": (icon: "cc-zero", name: "CC0 1.0", path: "publicdomain/zero/1.0/"),
+)
+
+/// Render the first-page footer: the license with its image, then (final
+/// version only) the received, accepted, revised and final-version dates,
+/// spread across the line. `license` is an SPDX identifier from `_licenses`;
+/// `dates` has the date-* fields of the iacrmetadata.
+#let first-page-footer(journal, license, version: "preprint", dates: (:)) = {
+  let cfg = config.first-page-footer
+  let license = _licenses.at(license)
+  let url = "https://creativecommons.org/" + license.path
+  let img = cfg.image
+  set text(..cfg.text)
+  set par(leading: cfg.leading, justify: false, first-line-indent: 0pt)
+  [This work is licensed under a #link(url)[“#license.name”] license.]
+  h(1fr)
+  // A zero-height box puts the image on the baseline without making the
+  // line taller, so the first baseline stays where `first-baseline` says.
+  box(width: 4em, place(bottom + left, link(url, {
+    set image(alt: license.name + " license")
+    ccicon(
+      license.icon,
+      format: img.format,
+      scale: img.height / 0.75em,
+      baseline: 0%,
+    )
+  })))
+  if version != "final" { return }
+  let entries = (
+    ("Received", dates.at("date-received", default: none)),
+    ("Accepted", dates.at("date-accepted", default: none)),
+    ("Revised", dates.at("date-revised", default: none)),
+    ("Final version", dates.at("date-final", default: none)),
+  ).filter(e => e != none and e.last() != none)
+  if entries.len() == 0 { return }
+  linebreak()
+  entries.map(((label, value)) => [#label: #value]).join(h(1fr))
+}
+
+/// Place the first-page footer in the bottom margin of the current page.
+/// It is document content rather than the page footer: PDF/UA forbids links
+/// in page artifacts, and the license statement should be read anyway.
+#let place-first-page-footer(
+  journal,
+  license,
+  version: "preprint",
+  dates: (:),
+) = {
+  let cfg = config.first-page-footer
+  let cic = journal.issn == config.journals.cic.issn
+  let first-baseline = if cic { cfg.first-baseline.cic } else {
+    cfg.first-baseline.other
+  }
+  // Measured from the top of the text block, since footnotes shrink the
+  // flow at the bottom. The zero-height block's content hangs below that
+  // point; its first line is as tall as the text's top edge.
+  let (height, margin) = config.page
+  let dy = (
+    height
+      - margin.top
+      - margin.bottom
+      + first-baseline
+      - config.text.top-edge.em * cfg.text.size
+  )
+  place(top + left, dy: dy, block(width: 100%, height: 0pt, {
+    first-page-footer(journal, license, version: version, dates: dates)
+  }))
 }
 
 /// Render the publication header: journal, issue, DOI and Crossmark badge.
@@ -390,7 +545,7 @@
 #let first-page-header(
   journal,
   volume: none,
-  number: none,
+  issue: none,
   doi: none,
   crossmark-date: none,
 ) = context {
@@ -398,17 +553,17 @@
   set text(..config.first-page-header.text)
   set par(leading: config.first-page-header.leading)
   let pages = counter(page).final().first()
-  let issue = (
+  let issue-line = (
     [ISSN~#journal.issn],
     if volume != none [Vol.~#volume],
-    if number != none [No.~#number],
+    if issue != none [No.~#issue],
     [#pages~#if pages == 1 [page.] else [pages.]],
   ).filter(x => x != none)
   let cic = journal.issn == config.journals.cic.issn
   let journal-info = {
     journal.name
     linebreak()
-    issue.join[, ]
+    issue-line.join[, ]
   }
   let header = block(width: 100%, spacing: 0pt, {
     if cic and doi != none {
@@ -449,7 +604,7 @@
   authors: (),
   version: "preprint",
   volume: none,
-  number: none,
+  issue: none,
   doi: none,
   crossmark-date: none,
 ) = {
@@ -468,7 +623,7 @@
       first-page-header(
         journal,
         volume: volume,
-        number: number,
+        issue: issue,
         doi: doi,
         crossmark-date: crossmark-date,
       )
@@ -642,10 +797,10 @@
   counter(footnote).update(0)
 }
 
-// The template itself. `iacrmetadata` is the text of main.iacrmetadata;
-// authors use `iacrj` below, which takes it from the compiler instead.
+// The template itself. `iacrmetadata` is the text of main.iacrmetadata, or
+// none without one; authors use `iacrj` below, which takes it from the compiler instead.
 #let _iacrj(
-  iacrmetadata: "",
+  iacrmetadata: none,
   journal: none, // required: "cic", "tosc" or "tches"
   version: "preprint",
   notanonymous: false,
@@ -655,6 +810,7 @@
   abstract: "",
   keywords: (),
   bibliography: (),
+  license: none,
   enable-checks: true,
   body,
 ) = {
@@ -703,6 +859,7 @@
       abstract: abstract,
       keywords: keywords,
       bibliography: bibliography,
+      license: license,
     ),
     z.dictionary((
       // The IACR journal: Communications in Cryptology (cic), Transactions
@@ -759,9 +916,18 @@
         default: none,
         pre-transform: (self, it) => if type(it) == str { (it,) } else { it },
       ),
+      // An SPDX license identifier such as "CC-BY-4.0" (iacrj.cls's
+      // \license). Only Creative Commons licenses are supported.
+      license: z.choice(_licenses.keys(), optional: true),
     )),
     scope: ("iacrj",),
     ctx: z.z-ctx(strict: true), // reject unknown keys, e.g. (full: .., shrot: ..)
+  )
+
+  assert(
+    args.version != "final" or args.license != none,
+    message: "iacrj: version: \"final\" requires a license, "
+      + "e.g. license: \"CC-BY-4.0\".",
   )
 
   for author in args.authors {
@@ -784,7 +950,7 @@
     .map(file => read("/" + file.trim(at: start, "/"), encoding: none))
     .join(bytes("\n"))
 
-  // Volume and number for the first-page header (\IACR@vol, \IACR@no).
+  // Volume and issue for the first-page header (\IACR@vol, \IACR@no).
   let iacr = _parse-iacrmetadata(iacrmetadata)
 
   let (full: full-title, short: short-title) = args.title
@@ -792,7 +958,7 @@
   let journal = config.journals.at(args.journal)
 
   // A submission hides the authors and affiliations everywhere: title block,
-  // running head, PDF metadata and bundle metadata (iacrj.cls's anonymous mode).
+  // running head, PDF metadata and <iacrj-meta> (iacrj.cls's anonymous mode).
   let anonymous = args.version == "submission" and not args.notanonymous
   let author-names = args.authors.map(a => a.name)
 
@@ -812,7 +978,7 @@
     authors: if anonymous { () } else { args.authors },
     version: args.version,
     volume: iacr.volume,
-    number: iacr.number,
+    issue: iacr.issue,
     doi: iacr.doi,
     crossmark-date: iacr.crossmark-date,
   )
@@ -948,10 +1114,11 @@
     journal: args.journal,
     version: args.version,
     volume: iacr.volume,
-    number: iacr.number,
+    issue: iacr.issue,
     title: (full: full-title, short: short-title),
     authors: if anonymous { () } else { args.authors },
     affiliations: if anonymous { (:) } else { args.affiliations },
+    license: args.license,
   )
   if args.version == "final" {
     meta.doi = iacr.doi
@@ -959,6 +1126,10 @@
     meta.crossmark-url = if iacr.doi != none and iacr.crossmark-date != none {
       _crossmark-url(iacr.doi, iacr.crossmark-date)
     }
+    meta.date-received = iacr.date-received
+    meta.date-accepted = iacr.date-accepted
+    meta.date-revised = iacr.date-revised
+    meta.date-final = iacr.date-final
   }
   // It is still unclear how the publishing pipeline should retrieve these
   // source files; record their names rather than exporting the combined data.
@@ -990,6 +1161,18 @@
         + "Pass your BibTeX filenames with the iacrj bibliography option instead, "
         + "e.g. bibliography: (\"references.bib\",).",
     )
+    // Placed first so that it lands on page 1. A submission shows no
+    // license, as in iacrj.cls; HTML has no pages.
+    if args.license != none and args.version != "submission" {
+      context if target() != "html" {
+        place-first-page-footer(
+          journal,
+          args.license,
+          version: args.version,
+          dates: iacr,
+        )
+      }
+    }
     front-matter
 
     // The title-block customizes spacing, so should not be checked
@@ -1006,39 +1189,25 @@
     // including front matter but excluding any bibliography-only pages.
     metadata("iacrj-paper-end")
   }
-  let doc = {
-    // The metadata for introspection from the command line, e.g.
-    //   typst eval --in main.typ 'query(<iacrj-meta>).first().value'
-    // HTML output has no pages.
-    context [#metadata(
-      meta
-        + (
-          pages: if target() != "html" { paper-pages() },
-          abstract: abstract-text,
-        ),
-    )<iacrj-meta>]
-    paper
-    if args.bibliography.len() > 0 {
-      std.bibliography(bibliography-source)
-    }
-  }
-
-  context {
-    if target() != "bundle" {
-      // regular PDF (or HTML, PNG, SVG) output
-      return doc
-    }
-    // bundle: the paper plus a metadata file
-    // the metadata is not exactly yaml, should either build new encoder or change output format.
-    document("main.pdf", doc)
-    // The initial pass must emit main.pdf before its markers can be queried.
-    asset("main.meta", yaml.encode(meta + (pages: paper-pages())))
-    asset("main.abstract", abstract-text)
+  // The metadata for the publishing pipeline, queried from the command line:
+  //   typst query main.typ '<iacrj-meta>' --field value --one
+  // HTML output has no pages.
+  context [#metadata(
+    meta
+      + (
+        pages: if target() != "html" { paper-pages() },
+        abstract: abstract-text,
+      ),
+  )<iacrj-meta>]
+  paper
+  if args.bibliography.len() > 0 {
+    std.bibliography(bibliography-source)
   }
 }
 
 /// The iacrj template. The publisher supplies journal metadata (volume,
-/// number, doi and crossmark-date) for the final version in a file like the
+/// issue, doi, crossmark-date, date-received, date-accepted, date-revised
+/// and date-final) for the final version in a file like the
 /// \jobname.iacrmetadata file that iacrj.cls reads, named on the command line
 /// relative to the project root:
 ///
@@ -1053,7 +1222,7 @@
   )
   // Typst cannot test whether a file exists, so read it only when named.
   let file = sys.inputs.at("iacrmetadata", default: "").trim()
-  let iacrmetadata = if file == "" { "" } else {
+  let iacrmetadata = if file == "" { none } else {
     read("/" + file.trim(at: start, "/"))
   }
   _iacrj(iacrmetadata: iacrmetadata, ..args)

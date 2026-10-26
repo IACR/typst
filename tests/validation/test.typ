@@ -114,7 +114,13 @@
 
 // The version is one of preprint (the default), submission and final.
 #iacrj(journal: "cic", version: "submission", title: "T", authors: ("A",))[]
-#iacrj(journal: "cic", version: "final", title: "T", authors: ("A",))[]
+#iacrj(
+  journal: "cic",
+  version: "final",
+  license: "CC-BY-4.0",
+  title: "T",
+  authors: ("A",),
+)[]
 #assert(
   error(journal: "cic", version: "draft", title: "T", authors: ("A",)).contains(
     "iacrj.version",
@@ -140,7 +146,7 @@
   )).contains("iacrj.notanonymous"),
 )
 
-// Volume and number come from the publisher's iacrmetadata, never from the
+// Volume and issue come from the publisher's iacrmetadata, never from the
 // document.
 #assert(
   error(journal: "cic", title: "T", authors: ("A",), volume: 5).contains(
@@ -155,28 +161,60 @@
     iacrmetadata: "volume=5",
   ).contains("publisher"),
 )
-#let empty-metadata = (
+#let no-metadata = (
   volume: none,
-  number: none,
+  issue: none,
   doi: none,
   crossmark-date: none,
+  date-received: none,
+  date-accepted: none,
+  date-revised: none,
+  date-final: none,
 )
-#assert.eq(_parse-iacrmetadata(""), empty-metadata)
+#assert.eq(_parse-iacrmetadata(none), no-metadata)
+// A supplied file must have the received and accepted dates.
+#let dates = "date-received=2026-03-01\ndate-accepted=2026-08-01\n"
+#let empty-metadata = (
+  no-metadata + (date-received: "2026-03-01", date-accepted: "2026-08-01")
+)
+#for (metadata, message) in (
+  ("", "must have date-received and date-accepted."),
+  ("volume=5\n", "must have date-received and date-accepted."),
+  ("date-received=2026-03-01\n", "must have date-accepted."),
+  ("date-accepted=2026-08-01\n", "must have date-received."),
+  (
+    "date-received=\n" + "date-accepted=2026-08-01\n",
+    "must have date-received.",
+  ),
+) {
+  assert(
+    catch(() => _parse-iacrmetadata(metadata)).contains(
+      "iacrj: iacrmetadata " + message,
+    ),
+    message: repr(metadata),
+  )
+}
+#assert.eq(_parse-iacrmetadata(dates), empty-metadata)
 #assert.eq(
-  _parse-iacrmetadata("volume=5\nnumber=3\n"),
-  empty-metadata + (volume: 5, number: 3),
+  _parse-iacrmetadata(dates + "volume=5\nissue=3\n"),
+  empty-metadata + (volume: 5, issue: 3),
 )
 #assert.eq(
-  _parse-iacrmetadata(" volume = 5 \n\ndoi=10.62056/a1b2=c\nunknown=value\n"),
+  _parse-iacrmetadata(
+    dates + " volume = 5 \n\ndoi=10.62056/a1b2=c\nunknown=value\n",
+  ),
   empty-metadata + (volume: 5, doi: "10.62056/a1b2=c"),
 )
-#assert.eq(_parse-iacrmetadata("doi=\ncrossmark-date=\n"), empty-metadata)
 #assert.eq(
-  _parse-iacrmetadata("crossmark-date=2026-07-24\n"),
+  _parse-iacrmetadata(dates + "doi=\ncrossmark-date=\n"),
+  empty-metadata,
+)
+#assert.eq(
+  _parse-iacrmetadata(dates + "crossmark-date=2026-07-24\n"),
   empty-metadata + (crossmark-date: "2026-07-24"),
 )
 #assert.eq(
-  _parse-iacrmetadata("crossmark-date=2024-02-29\n"),
+  _parse-iacrmetadata(dates + "crossmark-date=2024-02-29\n"),
   empty-metadata + (crossmark-date: "2024-02-29"),
 )
 // Strict format validation rejects missing padding, extra parts and query injection.
@@ -260,5 +298,101 @@
   assert(
     catch(() => _parse-iacrmetadata("doi=" + doi)).contains("must be a DOI"),
     message: doi,
+  )
+}
+
+// The license is an SPDX identifier of a supported Creative Commons license,
+// and the final version requires one.
+#for license in ("CC-BY-4.0", "CC-BY-SA-4.0", "CC0-1.0") {
+  iacrj(journal: "cic", license: license, title: "T", authors: ("A",))[]
+}
+#for license in ("MIT", "CC-BY-3.0", "cc-by-4.0", "CC BY 4.0", 4) {
+  assert(
+    error(journal: "cic", license: license, title: "T", authors: (
+      "A",
+    )).contains(
+      "iacrj.license",
+    ),
+    message: repr(license),
+  )
+}
+#assert(
+  error(journal: "cic", version: "final", title: "T", authors: ("A",)).contains(
+    "requires a license",
+  ),
+)
+
+// The publisher's received, accepted, revised and final dates are YYYY-MM-DD.
+#assert.eq(
+  _parse-iacrmetadata(
+    "date-received=2026-03-01\ndate-accepted=2026-08-01\ndate-revised=2026-08-15\ndate-final=2026-08-23\n",
+  ),
+  empty-metadata
+    + (
+      date-received: "2026-03-01",
+      date-accepted: "2026-08-01",
+      date-revised: "2026-08-15",
+      date-final: "2026-08-23",
+    ),
+)
+#for key in ("date-received", "date-accepted", "date-revised", "date-final") {
+  assert(
+    catch(() => _parse-iacrmetadata(key + "=2026-8-1")).contains(
+      "invalid " + key + "; expected YYYY-MM-DD",
+    ),
+    message: key,
+  )
+}
+
+// Received <= accepted <= final and received <= revised <= final; equal dates
+// are allowed, the revised and final dates are optional, and the revised date
+// may come before or after acceptance.
+#assert.eq(
+  _parse-iacrmetadata(
+    "date-received=2026-08-01\ndate-accepted=2026-08-01\ndate-final=2026-08-01\n",
+  ).date-final,
+  "2026-08-01",
+)
+#assert.eq(
+  _parse-iacrmetadata(
+    "date-received=2026-03-01\ndate-accepted=2026-03-01\n",
+  ).date-final,
+  none,
+)
+#for revised in ("2026-05-01", "2026-08-15") {
+  assert.eq(
+    _parse-iacrmetadata(
+      "date-received=2026-03-01\ndate-accepted=2026-06-01\ndate-revised="
+        + revised
+        + "\ndate-final=2026-08-23\n",
+    ).date-revised,
+    revised,
+  )
+}
+#for (metadata, message) in (
+  (
+    "date-received=2026-08-02\ndate-accepted=2026-08-01\n",
+    "date-received (2026-08-02) must not be after date-accepted (2026-08-01)",
+  ),
+  (
+    "date-accepted=2026-08-24\ndate-final=2026-08-23\n",
+    "date-accepted (2026-08-24) must not be after date-final (2026-08-23)",
+  ),
+  (
+    "date-received=2027-01-01\ndate-final=2026-08-23\n",
+    "date-received (2027-01-01) must not be after date-final (2026-08-23)",
+  ),
+  (
+    "date-received=2026-03-01\ndate-revised=2026-02-28\n",
+    "date-received (2026-03-01) must not be after date-revised (2026-02-28)",
+  ),
+  (
+    "date-revised=2026-08-24\ndate-final=2026-08-23\n",
+    "date-revised (2026-08-24) must not be after date-final (2026-08-23)",
+  ),
+) {
+  assert(
+    catch(() => _parse-iacrmetadata(metadata)).contains(message),
+    message: metadata,
   )
 }

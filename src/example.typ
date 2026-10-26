@@ -10,7 +10,7 @@
 // the template so its formatting, checks, and paper-length boundary apply.
 #show: iacrj.with(
   journal: sys.inputs.at("journal", default: "cic"), // also "tosc" or "tches"
-  version: sys.inputs.at("version", default: "preprint"),
+  version: "final",
   // Set true only for submissions whose call for papers permits named authors.
   notanonymous: false,
   title: (
@@ -60,6 +60,8 @@
   // A single filename is accepted too. The strings and entries below are read
   // together so journal aliases defined in the first file work in the second.
   bibliography: ("example-strings.bib", "example.bib"),
+  // An SPDX identifier of a Creative Commons license; required for "final".
+  license: "CC-BY-ND-4.0",
   // Temporarily set false only when style checks obstruct development.
   // Restore true before submission; metadata validation remains active.
   enable-checks: true,
@@ -83,7 +85,7 @@ followed by lettered author notes.
 
 The default version is a preprint. With `--input version=submission`, the example
 hides names, affiliations, emails, ORCID links, and author notes from the front
-matter, running headers, PDF author metadata, and bundle metadata. Authors must
+matter, running headers, PDF author metadata, and the queried metadata. Authors must
 still avoid identifying themselves in the paper's prose and abstract.
 
 With `--input version=final`, publisher-supplied journal metadata controls the
@@ -188,15 +190,14 @@ default formatting or metadata validation. Manual bibliography calls remain
 prohibited; use the `bibliography:` option instead. Restore `enable-checks:
 true` (the default) before submission.
 
-For experimental bundle export, compile from the repository root:
+The paper's metadata can be queried as JSON from the repository root:
 
 ```sh
-typst compile --features bundle --format bundle src/example.typ example-bundle
+typst query src/example.typ '<iacrj-meta>' --field value --one
 ```
 
-The bundle contains `main.pdf`, `main.meta`, and `main.abstract`. Metadata records
-the bibliography filenames and `pages`: the physical page count through the
-end of the paper, including front matter but excluding bibliography-only pages.
-A page shared by the paper and its references still counts as a paper page.
-The abstract's original source is preserved separately. BibTeX files are not
-exported as assets; their delivery to the publisher is still to be determined.
+It records the bibliography filenames, the abstract's original source, and
+`pages`: the physical page count through the end of the paper, including front
+matter but excluding bibliography-only pages. A page shared by the paper and
+its references still counts as a paper page. The BibTeX files themselves are
+not included; their delivery to the publisher is still to be determined.

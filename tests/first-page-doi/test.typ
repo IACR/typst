@@ -13,7 +13,7 @@
   authors: ((name: "Alice"),),
   version: "final",
   volume: 3,
-  number: 2,
+  issue: 2,
   doi: doi,
   crossmark-date: "2026-07-24",
 ))

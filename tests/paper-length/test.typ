@@ -29,7 +29,7 @@ Second page of the paper.
 #if with-bibliography [A reference to @single.]
 
 #context {
-  // This is the same boundary used for `pages` in the bundle metadata.
+  // This is the same boundary used for `pages` in the <iacrj-meta> metadata.
   let ends = query(metadata.where(value: "iacrj-paper-end"))
   assert.eq(ends.len(), 2)
   assert.eq(ends.first().location().page(), 1)

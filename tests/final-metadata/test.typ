@@ -9,7 +9,11 @@
     + date
 )
 #let publisher = (
-  "volume=3\nnumber=2\ndoi=" + doi + "\ncrossmark-date=" + date + "\n"
+  "volume=3\nissue=2\ndoi="
+    + doi
+    + "\ncrossmark-date="
+    + date
+    + "\ndate-received=2026-03-01\ndate-accepted=2026-06-01\n"
 )
 
 #assert.eq(check-for-updates(doi, date).dest, updates-url)
@@ -24,6 +28,7 @@
   iacrmetadata: publisher,
   journal: "cic",
   version: "final",
+  license: "CC-BY-4.0",
   title: "Publisher metadata",
   authors: ("Alice",),
 )
