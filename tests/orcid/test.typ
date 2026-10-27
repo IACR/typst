@@ -21,7 +21,7 @@
 #assert.eq(dest("0000-0002-9079-593X"), "https://orcid.org/0000-0002-9079-593X")
 #assert.eq(dest("0000-0002-9079-593x"), "https://orcid.org/0000-0002-9079-593X")
 
-// The default icon height is fixed; only its 0.2em left inset scales with text.
+// The icon is 0.7em tall, as tall as the line, with a 0.2em left inset.
 #assert.eq(orcid(canonical).body.inset, (left: 0.2em))
 #let described = orcid(canonical, alt: "ORCID record for Alice")
 #assert.eq(described.dest, canonical)
@@ -31,17 +31,18 @@
     set text(size: size)
     context {
       let default = measure(orcid(canonical))
-      assert(calc.abs(default.height - 8.2pt) < 0.001pt)
-      assert(calc.abs(default.width - (8.2pt + 0.2 * size)) < 0.001pt)
+      assert(calc.abs(default.height - 0.7 * size) < 0.001pt)
+      assert(calc.abs(default.width - 0.9 * size) < 0.001pt)
 
       for margin in (0pt, 3pt, 0.4em) {
         let icon = orcid(canonical, hor-margin: margin)
         assert.eq(icon.body.inset, (left: margin))
         assert.eq(icon.dest, canonical)
         let actual = measure(icon)
-        assert(calc.abs(actual.height - 8.2pt) < 0.001pt)
+        assert(calc.abs(actual.height - 0.7 * size) < 0.001pt)
         assert(
-          calc.abs(actual.width - (8.2pt + margin.to-absolute())) < 0.001pt,
+          calc.abs(actual.width - (0.7 * size + margin.to-absolute()))
+            < 0.001pt,
         )
       }
 

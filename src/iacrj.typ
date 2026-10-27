@@ -7,121 +7,107 @@
 #let sans = "new computer modern sans"
 #let mono = ("new computer modern mono", "dejavu sans mono")
 
-// TODO: review AI generated spacing and values.
+// Review AI generated definition
+// Lengths follow the definitions of article.cls (10pt), metacapture.sty and
+// iacrj.cls. Font sizes and most spacing are relative to the text size, so
+// `em` in a set rule means the size of the text it applies to. LaTeX's
+// \baselineskip is 1.2em: each line is `text.top-edge` (0.7em) tall plus
+// `par.leading` (0.5em), so a \vskip of x between paragraphs is `v(x)`.
 #let config = (
-  // geometry: a4paper, hscale=0.65, vscale=0.75, marginratio=1:1
-  //   text width  = 0.65 * 210mm = 136.5mm  -> 36.75mm left and right
-  //   text height = 0.75 * 297mm = 222.75mm -> 37.125mm top and bottom
-  // The extra 3pt at the top puts the first baseline 10pt below the top of
-  // the text block (\topskip), as in LaTeX.
+  // geometry: a4paper, hscale=0.65, vscale=0.75, marginratio=1:1. Ratios are
+  // relative to the page width (left, right) and height (top, bottom).
   page: (
     width: 210mm,
     height: 297mm,
-    margin: (
-      top: 37.125mm + 3pt,
-      bottom: 37.125mm,
-      left: 36.75mm,
-      right: 36.75mm,
-    ),
+    margin: (top: 12.5%, bottom: 12.5%, left: 17.5%, right: 17.5%),
     numbering: "1",
-    header-ascent: 31.5pt, // header baseline 28.5pt above the text block
+    // \headsep plus the depth of the \strut in fancyhdr's header
+    header-ascent: 2.85em,
     footer: none,
   ),
-  // First-page header (fancypagestyle title): \small, 9pt on 11pt.
-  // Its two lines don't fit in \headheight (12pt), so fancyhdr enlarges it
-  // to 20.5pt, which moves the header 8.5pt down towards the text.
-  // `crossmark`: the DOI URL and Crossmark badge on the right, instead of
-  // "DOI: ..." at the end of the issue line.
+  // The first-page header and footer hang from their first baseline: with
+  // `top-edge: "baseline"` lines have no height, so `leading` is the distance
+  // between baselines (\baselineskip, 1.2em).
+  //
+  // First-page header (fancypagestyle title): \small. fancyhdr enlarges the
+  // header box downwards for its two lines, so the first line, not the last,
+  // is at the running head's baseline. `crossmark`: the DOI URL and
+  // Crossmark badge on the right, instead of "DOI: ..." on the issue line.
   first-page-header: (
     crossmark: false,
-    text: (size: 9pt),
-    leading: 4.7pt,
-    dy: 8.5pt,
-    updates-gap: 2pt,
+    text: (size: 0.9em, top-edge: "baseline"),
+    leading: 1.2em,
+    updates-gap: 0.2em,
   ),
-  // First-page footer (fancypagestyle title): \small, 9pt on 11pt, plus the
-  // .1em after the license line. The first baseline is \footskip (30pt)
-  // below the text block. The badge is 4em wide (doclicense imagewidth=4em).
+  // First-page footer (fancypagestyle title): \small, with .1em after the
+  // license line. The first baseline is \footskip below the text block. The
+  // badge is 4em wide (doclicense imagewidth=4em).
   first-page-footer: (
-    text: (size: 9pt),
-    leading: 5.6pt,
-    first-baseline: 30pt,
+    text: (size: 0.9em, top-edge: "baseline"),
+    leading: 1.3em,
+    first-baseline: 3em,
     image: (format: "badge", height: 1.4em),
   ),
-  // Rule under the running head, across the text width (pages 2+).
-  // `gap` is the distance below the header baseline.
-  header-rule: (stroke: 0.4pt, gap: 5pt),
-  // \documentclass[10pt]{article}: 10pt on 12pt
+  // \headrule below the running head (pages 2+).
+  header-rule: (stroke: 0.4pt, gap: 0.5em),
+  // \documentclass[10pt]{article}
   text: (
     size: 10pt,
     font: serif, // lowercase: Typst normalizes font names
     lang: "en",
     top-edge: 0.7em,
-    bottom-edge: 0em, // baseline-to-baseline = 0.7em + leading
+    bottom-edge: 0em,
   ),
   par: (
     justify: true,
-    first-line-indent: (amount: 15pt, all: false),
-    leading: 0.5em, // 12pt baselines
+    first-line-indent: (amount: 1.5em, all: false), // \parindent
+    leading: 0.5em,
     // LaTeX paragraph spacing is variable to fill the entire page. Typst does not support this.
     // https://github.com/typst/typst/issues/6042
     spacing: 0.5em, // \parskip = 0pt
   ),
 
-  // Approximate article.cls's regular display skips: 10pt in the body and
-  // 9pt in the abstract (LaTeX uses 8.5pt). No short-line or stretch/shrink logic.
+  // \abovedisplayskip and \belowdisplayskip. No short-line or stretch/shrink
+  // logic.
   equation: (above: 1em, below: 1em),
 
-  // article.cls headings. CiC: serif bold; ToSC/TCHES: sans bold (sectsty).
-  // TODO: check spacing
+  // article.cls headings: \Large, \large and \normalsize bold, about 3.5ex
+  // above and 2.3ex below. Typst's default sizes (1.4em, 1.2em, 1em) are
+  // close to LaTeX's. CiC: serif; ToSC/TCHES: sans (sectsty).
   heading: (
     numbering: "1.1",
     text: (font: serif),
-    levels: (
-      // \section, \Large: 33.3pt above / 22.0pt below (baseline to baseline)
-      (
-        text: (size: 14.4pt, weight: "bold"),
-        block: (above: 23.2pt, below: 15pt),
-      ),
-      // \subsection, \large: 27.4pt / 18.4pt
-      (text: (size: 12pt, weight: "bold"), block: (above: 19pt, below: 11.4pt)),
-      // \subsubsection, \normalsize: 26.3pt / 18.4pt
-      (
-        text: (size: 10pt, weight: "bold"),
-        block: (above: 19.3pt, below: 11.4pt),
-      ),
-    ),
+    block: (above: 1.6em, below: 1em), // relative to the heading size
   ),
 
-  // itemize/enumerate: label at 12pt, text at 25pt (\leftmargini = 2.5em),
-  // \itemsep + \parsep = 8.2pt between items and around the list.
+  // itemize/enumerate: the text at \leftmargini (2.5em), \labelsep (.5em)
+  // after the label, and \topsep, \itemsep + \parsep (0.8em) between items.
   list: (
-    indent: 12.1pt,
-    body-indent: 5pt,
-    spacing: 13.2pt,
+    indent: 1.2em,
+    body-indent: 0.5em,
+    spacing: 1.3em,
     marker: ([•], [–], [∗], [·]),
   ),
-  enum: (indent: 12.1pt, body-indent: 5pt, spacing: 13.2pt),
-  list-block: (above: 13.2pt, below: 13.2pt),
+  enum: (indent: 1.2em, body-indent: 0.5em, spacing: 1.3em),
+  list-block: (above: 1.3em, below: 1.3em),
 
   // \texttt: Latin Modern Mono at the text size (Typst scales raw to 0.8em).
   raw: (font: mono, size: 1.25em),
 
   // float package (iacrabove/iacrbelow): "Figure 1:" in sans bold,
-  // table captions above the table.
-  figure: (gap: 10pt),
+  // \abovecaptionskip, table captions above the table.
+  figure: (gap: 1em),
   table-caption: (position: top),
   caption-label: (font: sans, weight: "bold"),
 
   // Submissions number their lines, like lineno with
   // \linenumberfont = \normalfont\tiny\sffamily\color{gray}.
-  line-numbers: (size: 5pt, font: sans, fill: gray),
+  line-numbers: (size: 0.5em, font: sans, fill: gray),
 
-  // \footnotesize (8pt on 9.5pt), rule of 0.4\textwidth, text at 1.8em.
+  // \footnotesize, a rule of 0.4\textwidth and the text at 1.8em.
   footnote: (
-    entry: (separator: line(length: 40%, stroke: 0.4pt), indent: 18pt),
-    text: (size: 8pt),
-    par: (leading: 3.9pt),
+    entry: (separator: line(length: 40%, stroke: 0.4pt), indent: 1.8em),
+    text: (size: 0.8em),
   ),
 
   // Use one style for citations and their reference-list labels. The built-in
@@ -138,48 +124,36 @@
   ),
 
   // \maketitle of metacapture (maketitle=iacrj), abstract and keywords.
-  // `gap` controls stack spacing or the space above a flow block.
-  // Values approximate the baselines of iacrj-doc.pdf.
+  // `above` is the \vskip before an element, in the size of the text
+  // around it, as in LaTeX.
   title-block: (
-    // \LARGE\bfseries\sffamily: 17.28pt on 22pt
-    title: (
-      gap: 36.8pt,
-      text: (size: 17.28pt, font: sans, weight: "bold"),
-      leading: 9.9pt,
-    ),
-    // \large\sffamily\bfseries
-    subtitle: (gap: 15.1pt, text: (size: 12pt, font: sans, weight: "bold")),
-    // \large: 12pt on 14.5pt
-    authors: (
-      gap: 19.4pt,
-      text: (size: 12pt),
-      leading: 6.1pt,
-      mark-raise: -0.37em,
-    ),
-    // \small: 9pt on 11pt
-    affiliations: (
-      gap: 16.4pt,
-      text: (size: 9pt),
-      leading: 4.7pt,
-      mark-raise: -0.42em,
-    ),
-    // superscript affiliation numbers (\scriptsize relative to the line)
-    marks: (typographic: false, size: 0.667em),
-    // article abstract: \small, quotation margins 2.5em, indent 1.5em
+    // \null (an empty line) and \vskip 2em above the title's \baselineskip,
+    // then \LARGE\bfseries\sffamily (Typst's default title size, 1.7em, is
+    // close to \LARGE)
+    title: (above: 4em, text: (font: sans)),
+    // \vskip .5em, then \large\sffamily\bfseries
+    subtitle: (above: 0.5em, text: (size: 1.2em, font: sans, weight: "bold")),
+    // \vskip 1.5em, then \large
+    authors: (above: 1.5em, text: (size: 1.2em)),
+    // \vskip 1em (in \large), then \small
+    affiliations: (above: 1em, text: (size: 0.9em)),
+    // superscript marks: $^{1}$, \scriptsize relative to the line
+    marks: (typographic: false, size: 0.7em, baseline: -0.4em),
+    // \vskip 1.5em at the end of \maketitle
+    below: 1.5em,
+    // the \topsep of the center environment and the heading's leading.
+    // article abstract: \small, quotation margins \leftmargini (2.5em),
+    // \listparindent 1.5em.
     abstract: (
-      gap: 29.8pt,
-      heading-gap: 9.3pt,
-      text: (size: 9pt),
-      par: (
-        leading: 4.7pt,
-        spacing: 4.7pt,
-        justify: true,
-        first-line-indent: (amount: 1.5em, all: false),
-      ),
-      margin: 25pt,
+      above: 2em,
+      margin: 2.5em,
+      text: (size: 0.9em),
+      // the \topsep of the center and quotation, minus a .5em \vspace
+      heading-below: 0.8em,
+      par: (justify: true, first-line-indent: (amount: 1.5em, all: false)),
     ),
-    // \textbf{\textsf{Keywords:}}~
-    keywords: (gap: 12.2pt, label: (font: sans, weight: "bold")),
+    // the quotation's \topsep and \smallskip, then \textbf{\textsf{Keywords:}}~
+    keywords: (above: 0.7em, label: (font: sans, weight: "bold")),
   ),
 )
 
@@ -191,8 +165,6 @@
   cic: (
     journal: (name: "IACR Communications in Cryptology", issn: "3006-5496"),
     first-page-header: (crossmark: true),
-    // CiC's taller license badge pushes the footer down a line.
-    first-page-footer: (first-baseline: 41.9pt),
   ),
   tosc: (
     journal: (
@@ -246,13 +218,14 @@
 /// ORCID iD icon linking to the author's ORCID record, like `\OrcidLink` in
 /// metacapture.sty (used by iacrj.cls): the "authenticated" logo, sitting on
 /// the baseline with a 0.2em gap after the author name and affiliation marks.
-/// The default height matches the cap height of the 12pt New Computer Modern authors.
+/// The logo is as tall as the line (`text.top-edge`), so that it does not
+/// push the line down. metacapture's \AuthOrcidLogo[.8] is slightly larger.
 /// `alt` describes the linked record to assistive technology.
 ///
 /// Accepts e.g. "0000-0002-1825-0097", "0000 0002 1825 0097",
 /// "0000000218250097", "https://orcid.org/0000-0002-1825-0097",
 /// "orcid.org/0000-0002-1825-009x". Panics on malformed IDs and wrong checksums.
-#let orcid(id, height: 8.2pt, hor-margin: 0.2em, alt: "ORCID iD") = {
+#let orcid(id, height: 0.7em, hor-margin: 0.2em, alt: "ORCID iD") = {
   assert(
     type(id) == str,
     message: "orcid: expected a string like \"0000-0002-1825-0097\", got "
@@ -549,15 +522,10 @@
   let cfg = config.first-page-footer
   // Measured from the top of the text block, since footnotes shrink the
   // flow at the bottom. The zero-height block's content hangs below that
-  // point; its first line is as tall as the text's top edge.
+  // point from its first baseline.
   let (height, margin) = config.page
-  let dy = (
-    height
-      - margin.top
-      - margin.bottom
-      + cfg.first-baseline
-      - config.text.top-edge.em * cfg.text.size
-  )
+  let text-height = height * (100% - margin.top - margin.bottom)
+  let dy = text-height + cfg.first-baseline
   place(top + left, dy: dy, block(width: 100%, height: 0pt, {
     first-page-footer(journal, license, version: version, dates: dates)
   }))
@@ -615,7 +583,9 @@
       }
     }
   })
-  move(dy: cfg.dy, header)
+  // The header hangs from its first baseline, at the bottom of the header
+  // area. Placing it lays it out in the whole area, so the badge still fits.
+  place(top + left, dy: 100%, header)
 }
 
 /// Render the first-page journal header and subsequent running heads.
@@ -674,15 +644,12 @@
 }
 
 /// Style an integer affiliation number as a superscript.
-#let affiliation-marker(
-  number,
-  baseline: config.title-block.authors.mark-raise,
-) = {
+#let affiliation-marker(number) = {
   assert(
     type(number) == int,
     message: "affiliation-marker: expected an integer.",
   )
-  super(..config.title-block.marks, baseline: baseline, str(number))
+  super(..config.title-block.marks, str(number))
 }
 
 /// Link an author-side marker to an affiliation key, displaying its number.
@@ -724,14 +691,12 @@
         a
           .inst
           .map(key => affiliation-reference(key, affiliation-numbers.at(key)))
-          .join(
-            super(..tb.marks, baseline: tb.authors.mark-raise, [,]),
-          )
+          .join(super(..tb.marks, [,]))
       }
       if a.footnote != none {
         // Author footnotes are lettered (a, b, ...) and placed like the
         // affiliation marks, so "1,a" reads as one superscript.
-        set super(..tb.marks, baseline: tb.authors.mark-raise)
+        set super(..tb.marks)
         if show-inst and a.inst != none { super[,] }
         footnote(numbering: "a", a.footnote)
       }
@@ -745,10 +710,7 @@
       .map(((i, entry)) => {
         let (key, aff) = entry
         if show-inst {
-          [#affiliation-marker(
-              i + 1,
-              baseline: tb.affiliations.mark-raise,
-            )#label("iacrj-affiliation-" + key)]
+          [#affiliation-marker(i + 1)#label("iacrj-affiliation-" + key)]
           [~]
         }
         (aff.department, aff.name, aff.city, aff.country)
@@ -760,70 +722,65 @@
     authors.filter(a => a.email != none).map(a => a.email + " (" + a.name + ")")
   }
 
+  // Like metacapture's \maketitle: a \vskip, in the size of the text around
+  // it, before each part. Each part is a block with only its own leading
+  // above it, so that the next baseline is the \vskip plus \baselineskip away.
   set par(justify: false, first-line-indent: 0pt)
-  let title-content = block({
-    set par(leading: tb.title.leading)
-    show std.title: it => text(..tb.title.text, it.body)
-    std.title(title)
-  })
-  let author-content = block({
-    set par(leading: tb.authors.leading)
-    // Emit the unmarked email note before the names and their author notes.
-    if emails.len() > 0 {
-      footnote(
-        numbering: n => none,
-        {
-          if emails.len() == 1 { "Email: " } else { "Emails: " }
-          emails.join(", ")
-        },
-      )
-      counter(footnote).update(0) // so author footnotes start at a
+  align(center, {
+    set block(above: 0.5em, below: 0pt)
+    v(tb.title.above)
+    {
+      set text(..tb.title.text)
+      show std.title: it => it.body
+      block(std.title(title))
     }
-    text(..tb.authors.text, author-names.join(", ", last: " and "))
+    v(tb.authors.above)
+    {
+      set text(..tb.authors.text)
+      // Emit the unmarked email note before the names and their author notes.
+      if emails.len() > 0 {
+        footnote(
+          numbering: n => none,
+          {
+            if emails.len() == 1 { "Email: " } else { "Emails: " }
+            emails.join(", ")
+          },
+        )
+        counter(footnote).update(0) // so author footnotes start at a
+      }
+      block(author-names.join(", ", last: " and "))
+      if affiliation-lines.len() > 0 { v(tb.affiliations.above) }
+    }
+    if affiliation-lines.len() > 0 {
+      set text(..tb.affiliations.text)
+      block(affiliation-lines.join(linebreak()))
+    }
   })
-  let affiliation-content = if affiliation-lines.len() > 0 {
-    (
-      tb.affiliations.gap,
-      block({
-        set text(..tb.affiliations.text)
-        set par(leading: tb.affiliations.leading)
-        affiliation-lines.join(linebreak())
-      }),
-    )
-  } else { () }
-
-  align(center, stack(
-    dir: ttb,
-    tb.title.gap,
-    title-content,
-    tb.authors.gap,
-    author-content,
-    ..affiliation-content,
-  ))
-  // Keep the abstract in normal flow: a stack cannot break across pages.
+  v(tb.below)
+  // Keep the abstract in normal flow, so that it can break across pages.
   if abstract != none {
-    block(width: 100%, above: tb.abstract.gap, {
+    v(tb.abstract.above)
+    pad(x: tb.abstract.margin, {
       set text(..tb.abstract.text)
       set par(..tb.abstract.par)
-      block(width: 100%, below: tb.abstract.heading-gap, {
-        set align(center)
-        // The abstract heading is not a sectioning command: sectsty leaves
-        // it serif in every journal.
-        show heading: it => text(
-          ..tb.abstract.text,
-          font: config.text.font,
-          weight: "bold",
-          it.body,
-        )
+      // The abstract heading is not a section heading: it keeps the size of
+      // the abstract instead of Typst's larger heading sizes.
+      context {
+        let size = text.size
+        show heading: it => {
+          set text(size: size)
+          block(width: 100%, below: tb.abstract.heading-below, {
+            align(center, strong(it.body))
+          })
+        }
         heading(level: 1, numbering: none, outlined: false, [Abstract])
-      })
-      pad(x: tb.abstract.margin, abstract)
+      }
+      abstract
     })
   }
   if keywords.len() > 0 {
-    block(above: tb.keywords.gap)[#text(
-        ..tb.keywords.label,
-      )[Keywords:]~#keywords.join(", ")]
+    v(tb.keywords.above)
+    [#text(..tb.keywords.label)[Keywords:]~#keywords.join(", ")]
   }
   // Author and email footnotes don't count: the paper's first footnote is 1.
   counter(footnote).update(0)
@@ -1118,22 +1075,16 @@
   set heading(numbering: config.heading.numbering)
   // Customizing spacing using set rule not supported.
   // https://github.com/typst/typst/issues/2351
-  show heading.where(numbering: config.heading.numbering): it => block({
-    counter(heading).display(it.numbering)
-    h(1em)
-    it.body
-  })
-
-  // A for loop introduces a local scope, so one needs to be careful to make
-  // sure the show set rules apply
-  let levels = config.heading.levels
-  show heading.where(level: 1): set text(..levels.at(0).text)
-  show heading.where(level: 1): set block(..levels.at(0).block)
-  show heading.where(level: 2): set text(..levels.at(1).text)
-  show heading.where(level: 2): set block(..levels.at(1).block)
-  show heading.where(level: 3): set text(..levels.at(2).text)
-  show heading.where(level: 3): set block(..levels.at(2).block)
-  show heading: set text(..config.heading.text)
+  show heading: it => {
+    set text(..config.heading.text)
+    block(..config.heading.block, sticky: true, {
+      if it.numbering != none {
+        counter(heading).display(it.numbering)
+        h(1em)
+      }
+      it.body
+    })
+  }
 
   show raw: set text(..config.raw)
 
@@ -1148,7 +1099,6 @@
 
   set footnote.entry(..config.footnote.entry)
   show footnote.entry: set text(..config.footnote.text)
-  show footnote.entry: set par(..config.footnote.par)
   show footnote.entry: set par.line(numbering: none) // as in lineno
 
   show link: it => if type(it.dest) == str {

@@ -29,8 +29,8 @@
   assert.eq(first.x, position("second-line").x)
   assert.eq(first.x, position("continuation").x)
   assert(calc.abs(position("new-paragraph").x - first.x - 13.5pt) < 0.01pt)
-  assert(calc.abs(position("second-line").y - first.y - 11pt) < 0.01pt)
-  assert(calc.abs(first.y - position("abstract-heading").y - 15.6pt) < 0.01pt)
+  assert(calc.abs(position("second-line").y - first.y - 10.8pt) < 0.01pt)
+  assert(calc.abs(first.y - position("abstract-heading").y - 13.5pt) < 0.01pt)
 }
 
 Body.
