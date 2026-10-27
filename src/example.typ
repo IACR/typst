@@ -10,7 +10,7 @@
 // the template so its formatting, checks, and paper-length boundary apply.
 #show: iacrj.with(
   journal: sys.inputs.at("journal", default: "cic"), // also "tosc" or "tches"
-  version: "final",
+  version: sys.inputs.at("version", default: "preprint"), // or "submission", "final"
   // Set true only for submissions whose call for papers permits named authors.
   notanonymous: false,
   title: (
