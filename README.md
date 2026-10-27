@@ -230,7 +230,7 @@ do not expose these publication links.
 
 For CiC, the DOI URL is right-aligned above the linked “Check for updates” badge,
 as in the LaTeX class. ToSC and TCHES instead show `DOI: ...` on the issue line,
-without a badge. The badge SVG is stored in `_crossmark-icon` in `src/iacrj.typ`;
+without a badge. The badge is `src/icons/crossmark.svg`;
 `check-for-updates` renders it at 69pt wide by default. The badge's Crossmark
 URL is derived automatically from the DOI and `crossmark-date`; no separate
 URL is supplied. `crossmark-date` must use the exact `YYYY-MM-DD` format,
