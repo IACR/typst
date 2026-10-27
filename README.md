@@ -239,6 +239,13 @@ the PDF's last major version—normally its publication date, or the date of a
 significant in-place correction. It is never inferred from the compilation date.
 Without it, the DOI link is still rendered but the Crossmark badge is omitted.
 
+## Submissions
+
+`version: "submission"` hides the authors (see above) and numbers the lines
+in the margin, as iacrj.cls does with lineno, so reviewers can refer to them.
+The `line-numbers` option overrides this: `true` numbers the lines of any
+version, `false` turns them off. The default, `auto`, numbers submissions only.
+
 ## Accessibility
 
 The template uses native Typst elements for the visible document title, abstract

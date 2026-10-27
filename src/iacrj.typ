@@ -122,6 +122,10 @@
   table-caption: (position: top),
   caption-label: (font: sans, weight: "bold"),
 
+  // Submissions number their lines, like lineno with
+  // \linenumberfont = \normalfont\tiny\sffamily\color{gray}.
+  line-numbers: (size: 5pt, font: sans, fill: gray),
+
   // \footnotesize (8pt on 9.5pt), rule of 0.4\textwidth, text at 1.8em.
   footnote: (
     entry: (separator: line(length: 40%, stroke: 0.4pt), indent: 18pt),
@@ -804,6 +808,7 @@
   journal: none, // required: "cic", "tosc" or "tches"
   version: "preprint",
   notanonymous: false,
+  line-numbers: auto,
   title: "",
   authors: (),
   affiliations: (:),
@@ -853,6 +858,7 @@
       journal: journal,
       version: version,
       notanonymous: notanonymous,
+      line-numbers: line-numbers,
       title: title,
       authors: authors,
       affiliations: affiliations,
@@ -880,6 +886,9 @@
       version: z.choice(("preprint", "submission", "final")),
       // iacrj.cls's notanonymous option: show the authors in a submission.
       notanonymous: z.boolean(),
+      // Number the lines, like lineno in iacrj.cls. `auto` (validated as
+      // none) numbers them in submissions only.
+      line-numbers: z.boolean(optional: true),
       // Either "Title" or (full: "Long Title", short: "Short Title").
       // The short title is used in the running head (\titlerunning).
       // A plain string is turned into (full: it, short: it) before validation.
@@ -960,6 +969,9 @@
   // A submission hides the authors and affiliations everywhere: title block,
   // running head, PDF metadata and <iacrj-meta> (iacrj.cls's anonymous mode).
   let anonymous = args.version == "submission" and not args.notanonymous
+  let line-numbers = if args.line-numbers == none {
+    args.version == "submission"
+  } else { args.line-numbers }
   let author-names = args.authors.map(a => a.name)
 
   config.document = (
@@ -1048,6 +1060,10 @@
   set page(..config.page)
   set text(..config.text)
   set par(..config.par)
+  // Line numbers help reviewers refer to the text (iacrj.cls loads lineno).
+  set par.line(
+    numbering: n => text(..config.line-numbers, str(n)),
+  ) if line-numbers
   set std.bibliography(..config.bibliography)
   set cite(..config.cite)
   show math.equation.where(block: true): set block(..config.equation)
@@ -1102,6 +1118,7 @@
   set footnote.entry(..config.footnote.entry)
   show footnote.entry: set text(..config.footnote.text)
   show footnote.entry: set par(..config.footnote.par)
+  show footnote.entry: set par.line(numbering: none) // as in lineno
 
   show link: it => if type(it.dest) == str {
     text(fill: config.colors.url, it)
