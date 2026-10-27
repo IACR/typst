@@ -816,6 +816,8 @@
     author: z.dictionary(
       (
         name: z.string(min: 1),
+        // Only recorded in the metadata, where the publisher sorts authors
+        // by it; the template itself does not use it.
         surname: z.string(min: 1, optional: true),
         footnote: z.string(min: 1, optional: true),
         inst: z.array(z.string(min: 1), optional: true, pre-transform: (
