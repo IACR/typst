@@ -138,7 +138,8 @@
   bibliography: (style: read("iacrj.csl", encoding: none)),
   cite: (style: auto),
 
-  // hyperref colorlinks for journal=cic
+  // hyperref colorlinks of journal=cic, used for all journals (iacrj.cls
+  // leaves ToSC and TCHES URLs in hyperref's default magenta).
   colors: (
     url: rgb(0, 0, 255), // urlcolor=blue
     link: rgb(77, 0, 0), // linkcolor=black!70!red
