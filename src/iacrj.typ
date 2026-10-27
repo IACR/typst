@@ -86,6 +86,7 @@
   // TODO: check spacing
   heading: (
     numbering: "1.1",
+    text: (font: serif),
     levels: (
       // \section, \Large: 33.3pt above / 22.0pt below (baseline to baseline)
       (
@@ -191,6 +192,26 @@
     keywords: (gap: 12.2pt, label: (font: sans, weight: "bold")),
   ),
 )
+
+// The settings in `config` that a journal overrides, merged into it by the
+// template. ToSC and TCHES set their section headings in sans-serif
+// (sectsty's \allsectionsfont{\sffamily} in iacrj.cls).
+#let config-journal = (
+  cic: (:),
+  tosc: (heading: (text: (font: sans))),
+  tches: (heading: (text: (font: sans))),
+)
+
+/// Merge `override` into `base`, recursing into nested dictionaries.
+#let _merge(base, override) = {
+  for (key, value) in override {
+    let old = base.at(key, default: none)
+    base.insert(key, if type(old) == dictionary and type(value) == dictionary {
+      _merge(old, value)
+    } else { value })
+  }
+  base
+}
 
 // Downloaded from https://info.orcid.org/documentation/integration-guide/orcid-id-display-guidelines/
 #let _orcid-icon = image.with(
@@ -777,7 +798,14 @@
       set par(..tb.abstract.par)
       block(width: 100%, below: tb.abstract.heading-gap, {
         set align(center)
-        show heading: it => text(..tb.abstract.text, weight: "bold", it.body)
+        // The abstract heading is not a sectioning command: sectsty leaves
+        // it serif in every journal.
+        show heading: it => text(
+          ..tb.abstract.text,
+          font: config.text.font,
+          weight: "bold",
+          it.body,
+        )
         heading(level: 1, numbering: none, outlined: false, [Abstract])
       })
       pad(x: tb.abstract.margin, abstract)
@@ -956,7 +984,7 @@
   let iacr = _parse-iacrmetadata(iacrmetadata)
 
   let (full: full-title, short: short-title) = args.title
-  let config = config
+  let config = _merge(config, config-journal.at(args.journal))
   let journal = config.journals.at(args.journal)
 
   // A submission hides the authors and affiliations everywhere: title block,
@@ -1096,6 +1124,7 @@
   show heading.where(level: 2): set block(..levels.at(1).block)
   show heading.where(level: 3): set text(..levels.at(2).text)
   show heading.where(level: 3): set block(..levels.at(2).block)
+  show heading: set text(..config.heading.text)
 
   show raw: set text(..config.raw)
 
