@@ -126,6 +126,12 @@ first #math.equation(alt: "n", $n$) positive integers is
 The abstract also contains display mathematics. It remains in normal document
 flow, so longer abstracts can span pages without changing equation spacing.
 
+Mark text in another language with its language, so that hyphenation,
+quotation marks, and screen readers treat it correctly:
+#text(lang: "nl")["Typst is een opmaaktaal voor wetenschappelijke artikelen."]
+English remains the default; a paper in another language can use
+`#set text(lang: "nl")`.
+
 == Lists and code
 
 Use native lists for structured content:

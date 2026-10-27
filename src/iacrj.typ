@@ -54,7 +54,6 @@
   text: (
     size: 10pt,
     font: serif, // lowercase: Typst normalizes font names
-    lang: "en",
     top-edge: 0.7em,
     bottom-edge: 0em,
   ),
