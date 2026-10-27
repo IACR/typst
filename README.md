@@ -181,8 +181,8 @@ As in iacrj.cls, preprints and final versions show the license on the first
 page's footer, linked to the license deed, with its Creative Commons badge
 on the right. Submissions don't show it. A final version also shows, on the
 next line, the dates from the publisher's iacrmetadata (below): Received,
-Accepted, Revised and Final version, from `date-received`, `date-accepted`,
-`date-revised` and `date-final`. Revised and Final version are left out when
+Revised, Accepted and Final version, from `date-received`, `date-revised`,
+`date-accepted` and `date-final`. Revised and Final version are left out when
 their dates are missing. The footer is the same for all journals. Unlike
 iacrj.cls, preprints have no "Date of this document" line.
 

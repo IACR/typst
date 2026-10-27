@@ -478,7 +478,7 @@
 )
 
 /// Render the first-page footer: the license with its image, then (final
-/// version only) the received, accepted, revised and final-version dates,
+/// version only) the received, revised, accepted and final-version dates,
 /// spread across the line. `license` is an SPDX identifier from `_licenses`;
 /// `dates` has the date-* fields of the iacrmetadata.
 #let first-page-footer(journal, license, version: "preprint", dates: (:)) = {
@@ -504,8 +504,8 @@
   if version != "final" { return }
   let entries = (
     ("Received", dates.at("date-received", default: none)),
-    ("Accepted", dates.at("date-accepted", default: none)),
     ("Revised", dates.at("date-revised", default: none)),
+    ("Accepted", dates.at("date-accepted", default: none)),
     ("Final version", dates.at("date-final", default: none)),
   ).filter(e => e != none and e.last() != none)
   if entries.len() == 0 { return }
