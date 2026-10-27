@@ -1,5 +1,5 @@
 // Publisher DOI metadata is used only in the final version, and only on page 1.
-#import "/src/iacrj.typ": _iacrj, check-for-updates, config, page-header
+#import "/src/iacrj.typ": _iacrj, check-for-updates, config-journal, page-header
 
 #let doi = "10.62056/a66c0l2hd"
 #let doi-url = "https://doi.org/" + doi
@@ -36,14 +36,14 @@
 // These render nothing on physical page 1 even when publication links exist.
 #for version in ("preprint", "submission") {
   page-header(
-    config.journals.cic,
+    "cic",
     version: version,
     doi: doi,
     crossmark-date: date,
   )
 }
 #context assert.eq(document.description, [#(
-  config.journals.cic.name + ", DOI: " + doi
+  config-journal.cic.journal.name + ", DOI: " + doi
 )])
 
 Page one.

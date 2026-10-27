@@ -8,7 +8,7 @@
 #set text(..config.text)
 #set par(..config.par)
 #set page(..config.page, header: page-header(
-  config.journals.cic,
+  "cic",
   title: "Short title",
   authors: ((name: "Alice"),),
   version: "final",

@@ -4,7 +4,7 @@
 #set text(..config.text)
 #set par(..config.par)
 #set page(..config.page, header: page-header(
-  config.journals.cic,
+  "cic",
   title: "Standalone short title",
   authors: ((name: "Alice"), (name: "Bob")),
   version: "final",
@@ -28,7 +28,7 @@ Odd-page author header.
 
 #pagebreak()
 #set page(header: page-header(
-  config.journals.cic,
+  "cic",
   title: "Standalone short title",
 ))
 Even-page anonymous title header.

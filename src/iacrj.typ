@@ -27,22 +27,13 @@
     header-ascent: 31.5pt, // header baseline 28.5pt above the text block
     footer: none,
   ),
-  // Name and ISSN of each journal (\publname and \IACR@EISSN).
-  journals: (
-    cic: (name: "IACR Communications in Cryptology", issn: "3006-5496"),
-    tosc: (
-      name: "IACR Transactions on Symmetric Cryptology",
-      issn: "2519-173X",
-    ),
-    tches: (
-      name: "IACR Transactions on Cryptographic Hardware and Embedded Systems",
-      issn: "2569-2925",
-    ),
-  ),
   // First-page header (fancypagestyle title): \small, 9pt on 11pt.
   // Its two lines don't fit in \headheight (12pt), so fancyhdr enlarges it
   // to 20.5pt, which moves the header 8.5pt down towards the text.
+  // `crossmark`: the DOI URL and Crossmark badge on the right, instead of
+  // "DOI: ..." at the end of the issue line.
   first-page-header: (
+    crossmark: false,
     text: (size: 9pt),
     leading: 4.7pt,
     dy: 8.5pt,
@@ -50,12 +41,11 @@
   ),
   // First-page footer (fancypagestyle title): \small, 9pt on 11pt, plus the
   // .1em after the license line. The first baseline is \footskip (30pt)
-  // below the text block; CiC's taller badge pushes the footer down a line.
-  // The badge is 4em wide (doclicense imagewidth=4em).
+  // below the text block. The badge is 4em wide (doclicense imagewidth=4em).
   first-page-footer: (
     text: (size: 9pt),
     leading: 5.6pt,
-    first-baseline: (cic: 41.9pt, other: 30pt),
+    first-baseline: 30pt,
     image: (format: "badge", height: 1.4em),
   ),
   // Rule under the running head, across the text width (pages 2+).
@@ -194,12 +184,30 @@
 )
 
 // The settings in `config` that a journal overrides, merged into it by the
-// template. ToSC and TCHES set their section headings in sans-serif
-// (sectsty's \allsectionsfont{\sffamily} in iacrj.cls).
+// template. `journal` is the name and ISSN (\publname and \IACR@EISSN).
+// ToSC and TCHES set their section headings in sans-serif (sectsty's
+// \allsectionsfont{\sffamily} in iacrj.cls).
 #let config-journal = (
-  cic: (:),
-  tosc: (heading: (text: (font: sans))),
-  tches: (heading: (text: (font: sans))),
+  cic: (
+    journal: (name: "IACR Communications in Cryptology", issn: "3006-5496"),
+    first-page-header: (crossmark: true),
+    // CiC's taller license badge pushes the footer down a line.
+    first-page-footer: (first-baseline: 41.9pt),
+  ),
+  tosc: (
+    journal: (
+      name: "IACR Transactions on Symmetric Cryptology",
+      issn: "2519-173X",
+    ),
+    heading: (text: (font: sans)),
+  ),
+  tches: (
+    journal: (
+      name: "IACR Transactions on Cryptographic Hardware and Embedded Systems",
+      issn: "2569-2925",
+    ),
+    heading: (text: (font: sans)),
+  ),
 )
 
 /// Merge `override` into `base`, recursing into nested dictionaries.
@@ -212,6 +220,9 @@
   }
   base
 }
+
+/// The config of a journal: "cic", "tosc" or "tches".
+#let _journal-config(journal) = _merge(config, config-journal.at(journal))
 
 // Downloaded from https://info.orcid.org/documentation/integration-guide/orcid-id-display-guidelines/
 #let _orcid-icon = image.with(
@@ -494,7 +505,7 @@
 /// spread across the line. `license` is an SPDX identifier from `_licenses`;
 /// `dates` has the date-* fields of the iacrmetadata.
 #let first-page-footer(journal, license, version: "preprint", dates: (:)) = {
-  let cfg = config.first-page-footer
+  let cfg = _journal-config(journal).first-page-footer
   let license = _licenses.at(license)
   let url = "https://creativecommons.org/" + license.path
   let img = cfg.image
@@ -534,11 +545,8 @@
   version: "preprint",
   dates: (:),
 ) = {
+  let config = _journal-config(journal)
   let cfg = config.first-page-footer
-  let cic = journal.issn == config.journals.cic.issn
-  let first-baseline = if cic { cfg.first-baseline.cic } else {
-    cfg.first-baseline.other
-  }
   // Measured from the top of the text block, since footnotes shrink the
   // flow at the bottom. The zero-height block's content hangs below that
   // point; its first line is as tall as the text's top edge.
@@ -547,7 +555,7 @@
     height
       - margin.top
       - margin.bottom
-      + first-baseline
+      + cfg.first-baseline
       - config.text.top-edge.em * cfg.text.size
   )
   place(top + left, dy: dy, block(width: 100%, height: 0pt, {
@@ -557,7 +565,7 @@
 
 /// Render the publication header: journal, issue, DOI and Crossmark badge.
 /// The caller decides whether this header should appear; page counts resolve
-/// in context. `journal` is a dictionary with `name` and `issn`.
+/// in context. `journal` is "cic", "tosc" or "tches".
 #let first-page-header(
   journal,
   volume: none,
@@ -565,24 +573,25 @@
   doi: none,
   crossmark-date: none,
 ) = context {
+  let config = _journal-config(journal)
+  let cfg = config.first-page-header
   // Journal name and issue on the left, publication links on the right.
-  set text(..config.first-page-header.text)
-  set par(leading: config.first-page-header.leading)
+  set text(..cfg.text)
+  set par(leading: cfg.leading)
   let pages = counter(page).final().first()
   let issue-line = (
-    [ISSN~#journal.issn],
+    [ISSN~#config.journal.issn],
     if volume != none [Vol.~#volume],
     if issue != none [No.~#issue],
     [#pages~#if pages == 1 [page.] else [pages.]],
   ).filter(x => x != none)
-  let cic = journal.issn == config.journals.cic.issn
   let journal-info = {
-    journal.name
+    config.journal.name
     linebreak()
     issue-line.join[, ]
   }
   let header = block(width: 100%, spacing: 0pt, {
-    if cic and doi != none {
+    if cfg.crossmark and doi != none {
       grid(
         columns: (1fr, auto),
         column-gutter: 1em,
@@ -593,24 +602,24 @@
           link("https://doi.org/" + doi)
           if crossmark-date != none {
             linebreak()
-            v(config.first-page-header.updates-gap)
+            v(cfg.updates-gap)
             check-for-updates(doi, crossmark-date)
           }
         },
       )
     } else {
       journal-info
-      if not cic and doi != none {
+      if not cfg.crossmark and doi != none {
         h(1fr)
         link("https://doi.org/" + doi)[DOI: #doi]
       }
     }
   })
-  move(dy: config.first-page-header.dy, header)
+  move(dy: cfg.dy, header)
 }
 
 /// Render the first-page journal header and subsequent running heads.
-/// `journal` is a dictionary with `name` and `issn`; authors are normalized
+/// `journal` is "cic", "tosc" or "tches"; authors are normalized
 /// metadata dictionaries. An empty author list produces an anonymous running head.
 /// DOI and Crossmark links appear only in the final version's first-page header.
 
@@ -625,7 +634,7 @@
   crossmark-date: none,
 ) = {
   let author-running = if authors.len() == 0 {
-    "Anonymous Submission to " + journal.name
+    "Anonymous Submission to " + _journal-config(journal).journal.name
   } else {
     authors.map(a => a.name).join(", ")
   }
@@ -984,8 +993,7 @@
   let iacr = _parse-iacrmetadata(iacrmetadata)
 
   let (full: full-title, short: short-title) = args.title
-  let config = _merge(config, config-journal.at(args.journal))
-  let journal = config.journals.at(args.journal)
+  let config = _journal-config(args.journal)
 
   // A submission hides the authors and affiliations everywhere: title block,
   // running head, PDF metadata and <iacrj-meta> (iacrj.cls's anonymous mode).
@@ -1001,12 +1009,13 @@
     keywords: args.keywords,
     description: if args.version == "final" {
       [#(
-        journal.name + if iacr.doi != none { ", DOI: " + iacr.doi } else { "" }
+        config.journal.name
+          + if iacr.doi != none { ", DOI: " + iacr.doi } else { "" }
       )]
     },
   )
   config.page.header = page-header(
-    journal,
+    args.journal,
     title: short-title,
     authors: if anonymous { () } else { args.authors },
     version: args.version,
@@ -1205,7 +1214,7 @@
     if args.license != none and args.version != "submission" {
       context if target() != "html" {
         place-first-page-footer(
-          journal,
+          args.journal,
           args.license,
           version: args.version,
           dates: iacr,
