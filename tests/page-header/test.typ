@@ -5,8 +5,8 @@
 #set par(..config.par)
 #set page(..config.page, header: page-header(
   "cic",
-  title: "Standalone short title",
-  authors: ((name: "Alice"), (name: "Bob")),
+  running-title: "Standalone short title",
+  running-authors: "Alice, Bob",
   version: "final",
   volume: 5,
   issue: 3,
@@ -29,7 +29,8 @@ Odd-page author header.
 #pagebreak()
 #set page(header: page-header(
   "cic",
-  title: "Standalone short title",
+  running-title: "Standalone short title",
+  running-authors: "Anonymous Submission to IACR Communications in Cryptology",
 ))
 Even-page anonymous title header.
 #pagebreak()

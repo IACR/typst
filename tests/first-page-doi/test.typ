@@ -9,8 +9,8 @@
 #set par(..config.par)
 #set page(..config.page, header: page-header(
   "cic",
-  title: "Short title",
-  authors: ((name: "Alice"),),
+  running-title: "Short title",
+  running-authors: "Alice",
   version: "final",
   volume: 3,
   issue: 2,

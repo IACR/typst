@@ -587,26 +587,35 @@
   place(top + left, dy: 100%, header)
 }
 
+// A character-count heuristic keeps automatic running heads predictable without
+// measuring text during layout. A single author's name is never shortened.
+#let _running-authors(authors) = {
+  let names = authors.map(a => a.name).join(", ")
+  if authors.len() > 1 and names.len() > 70 {
+    let first = authors.first()
+    let surname = first.at("surname", default: none)
+    let surname = if surname != none { surname } else {
+      first.name.trim().split(regex("\s+")).last()
+    }
+    surname + " et al."
+  } else { names }
+}
+
 /// Render the first-page journal header and subsequent running heads.
-/// `journal` is "cic", "tosc" or "tches"; authors are normalized
-/// metadata dictionaries. An empty author list produces an anonymous running head.
+/// `journal` is "cic", "tosc" or "tches"; `running-title` and `running-authors`
+/// are the resolved running-head strings, including any anonymization.
 /// DOI and Crossmark links appear only in the final version's first-page header.
 
 #let page-header(
   journal,
-  title: "",
-  authors: (),
+  running-title: "",
+  running-authors: "",
   version: "preprint",
   volume: none,
   issue: none,
   doi: none,
   crossmark-date: none,
 ) = {
-  let author-running = if authors.len() == 0 {
-    "Anonymous Submission to " + _journal-config(journal).journal.name
-  } else {
-    authors.map(a => a.name).join(", ")
-  }
   // All `context` blocks compare equal, so a user's `context` header would
   // pass the check. The metadata marker makes the template's header unique.
   metadata("iacrj-header")
@@ -624,13 +633,13 @@
       return
     }
     if calc.odd(n) {
-      author-running
+      running-authors
       h(1fr)
       counter(page).display()
     } else {
       counter(page).display()
       h(1fr)
-      title
+      running-title
     }
     // The header ends at its baseline (text.bottom-edge is 0pt), so the rule
     // is placed relative to that. The header is as wide as the text.
@@ -794,6 +803,7 @@
   notanonymous: false,
   line-numbers: auto,
   title: "",
+  running: (:),
   authors: (),
   affiliations: (:),
   abstract: "",
@@ -805,12 +815,16 @@
 ) = {
   let from-string = (self, it) => if type(it) == str { (name: it) } else { it }
   let parsing = (
+    running-text: z.base-type(
+      name: "string or auto",
+      types: (str, type(auto)),
+      default: auto,
+    ),
     // Authors refer to affiliation keys: inst: "rub" or ("rub", "other").
     author: z.dictionary(
       (
         name: z.string(min: 1),
-        // Only recorded in the metadata, where the publisher sorts authors
-        // by it; the template itself does not use it.
+        // Used for shortened running heads and publisher-side author sorting.
         surname: z.string(min: 1, optional: true),
         footnote: z.string(min: 1, optional: true),
         inst: z.array(z.string(min: 1), optional: true, pre-transform: (
@@ -846,6 +860,7 @@
       notanonymous: notanonymous,
       line-numbers: line-numbers,
       title: title,
+      running: running,
       authors: authors,
       affiliations: affiliations,
       abstract: abstract,
@@ -884,6 +899,11 @@
           (full: it, short: it)
         } else { it },
       ),
+      // Missing fields and explicit `auto` use the automatic running heads.
+      running: z.dictionary((
+        title: parsing.running-text,
+        authors: parsing.running-text,
+      )),
       authors: z.array(parsing.author, min: 1),
       affiliations: z.dictionary(affiliation-schema),
       // A string of Typst markup, usually `read("abstract.typ")`. It is
@@ -972,8 +992,14 @@
   )
   config.page.header = page-header(
     args.journal,
-    title: short-title,
-    authors: if anonymous { () } else { args.authors },
+    running-title: if args.running.title == auto { short-title } else {
+      args.running.title
+    },
+    running-authors: if anonymous {
+      "Anonymous Submission to " + config.journal.name
+    } else if args.running.authors == auto {
+      _running-authors(args.authors)
+    } else { args.running.authors },
     version: args.version,
     volume: iacr.volume,
     issue: iacr.issue,

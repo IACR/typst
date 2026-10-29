@@ -58,6 +58,32 @@ only a `name`. Every referenced key must exist. Affiliation arrays and numeric
 `inst` references are no longer accepted. Anonymous submissions omit authors
 and affiliations from both the front matter and the queried metadata.
 
+## Running headers
+
+Use `running` to override the title and author text in the running headers:
+
+```typ
+#show: iacrj.with(
+  journal: "cic",
+  title: "A paper with a long title",
+  authors: ("Alice Example", "Bob Example"),
+  running: (title: "Short title", authors: "Example and Example"),
+)
+```
+
+Both fields default to `auto` and can be set independently. An automatic title
+uses `title.short` when the title is a record, or the full title otherwise.
+Automatic author text joins the full names with commas. If that text exceeds
+70 characters and there is more than one author, it becomes the first author's
+surname followed by “et al.” The `surname` field is used when provided;
+otherwise the last whitespace-separated word of the name is used. Supply
+`surname` or an explicit `running.authors` for names that need different handling.
+A single author's name is never shortened.
+
+Running overrides do not change the title block or publishing metadata.
+Anonymous submissions ignore `running.authors` and retain the anonymous header;
+`notanonymous: true` permits the override.
+
 ## Bibliography
 
 Pass one BibTeX filename or a tuple of filenames to the template:
