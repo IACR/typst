@@ -206,7 +206,8 @@ typst query src/example.typ '<iacrj-meta>' --field value --one
 ```
 
 It records the bibliography filenames, the abstract's original source, and
-`pages`: the physical page count through the end of the paper, including front
-matter but excluding bibliography-only pages. A page shared by the paper and
-its references still counts as a paper page. The BibTeX files themselves are
-not included; their delivery to the publisher is still to be determined.
+`pages`: a record with `full` counting all pages and `main` excluding
+bibliography-only pages. Both counts include front matter. A page shared by the
+main text and its references counts towards both totals. The BibTeX files
+themselves are not included; their delivery to the publisher is still to be
+determined.

@@ -158,15 +158,17 @@ The record contains:
 | `bibliography` | The supplied BibTeX filenames, normalized to a list and kept in input order. Empty when no sources are configured. |
 | `keywords` | The supplied keywords, as a list. |
 | `license` | The SPDX license identifier, or null when none is given. |
-| `pages` | The number of physical pages through the end of the paper, excluding bibliography-only pages. Null for HTML output. |
+| `pages` | A record with `full` (all pages, including references) and `main` (excluding bibliography-only pages) counts. Null for HTML output. |
 | `abstract` | The abstract's original Typst markup string, not extracted PDF text or a rendered abstract. Empty when no abstract is supplied. |
 | `doi`, `crossmark-date`, `crossmark-url` | Present only for `version: "final"`. Unavailable values are null; the Crossmark URL requires both a DOI and a Crossmark date. |
 | `date-received`, `date-accepted`, `date-revised`, `date-final` | Present only for `version: "final"`; the publisher's dates, or null. |
 
-The `pages` count includes front matter. A page shared by the paper and its
-bibliography counts as a paper page. This uses physical page positions, not the
-page counter or displayed page numbers; without a bibliography it is the paper's
-total page count.
+Both `pages.full` and `pages.main` include front matter. `pages.full` counts
+all pages, including references; `pages.main` counts through the end of the main
+text, excluding bibliography-only pages. A page shared by the main text and its
+references counts towards both totals. The counts use physical page positions,
+not the page counter or displayed page numbers. Without a bibliography, both
+counts are equal.
 
 Anonymous documents have an empty author list and affiliation dictionary in
 the metadata; `anonymous: false` disables that redaction in every version. The

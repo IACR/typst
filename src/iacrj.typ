@@ -1166,9 +1166,9 @@
   meta.keywords = args.keywords
   let abstract-text = args.abstract.text
 
-  // The number of physical pages through the paper-end marker below.
-  let paper-pages() = {
-    let ends = query(metadata.where(value: "iacrj-paper-end"))
+  // Count physical pages, independently of page-counter resets.
+  let pages-through(marker) = {
+    let ends = query(metadata.where(value: marker))
     // The template's boundary follows any matching markers in author content.
     if ends.len() > 0 { ends.last().location().page() }
   }
@@ -1224,7 +1224,12 @@
   context [#metadata(
     meta
       + (
-        pages: if target() != "html" { paper-pages() },
+        pages: if target() != "html" {
+          (
+            full: pages-through("iacrj-document-end"),
+            main: pages-through("iacrj-paper-end"),
+          )
+        },
         abstract: abstract-text,
       ),
   )<iacrj-meta>]
@@ -1232,6 +1237,7 @@
   if args.bibliography.len() > 0 {
     std.bibliography(bibliography-source)
   }
+  metadata("iacrj-document-end")
 }
 
 /// The iacrj template. The publisher supplies journal metadata (volume,
