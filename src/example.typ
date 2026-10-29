@@ -205,8 +205,9 @@ The paper's metadata can be queried as JSON from the repository root:
 typst query src/example.typ '<iacrj-meta>' --field value --one
 ```
 
-It records the bibliography filenames, the abstract's original source, and
-`pages`: a record with `full` counting all pages and `main` excluding
+It records the bibliography filenames, the unique cited keys sorted
+alphabetically as `citekeys`, the abstract's original source, and `pages`: a record with
+`full` counting all pages and `main` excluding
 bibliography-only pages. Both counts include front matter. A page shared by the
 main text and its references counts towards both totals. The BibTeX files
 themselves are not included; their delivery to the publisher is still to be

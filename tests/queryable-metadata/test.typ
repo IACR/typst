@@ -28,6 +28,7 @@ Second page.
   assert.eq(meta.keywords, ("one", "two"))
   assert.eq(meta.abstract, "An abstract with $x^2$.")
   assert.eq(meta.bibliography, ())
+  assert.eq(meta.citekeys, ())
   assert.eq(meta.pages, if target() == "html" { none } else {
     (full: 2, main: 2)
   })

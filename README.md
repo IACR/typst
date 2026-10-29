@@ -156,6 +156,7 @@ The record contains:
 | `authors` | Validated author records, including affiliation keys in `inst`. |
 | `affiliations` | Validated affiliation records keyed by the supplied identifiers, in display order. |
 | `bibliography` | The supplied BibTeX filenames, normalized to a list and kept in input order. Empty when no sources are configured. |
+| `citekeys` | Unique cited bibliography keys as strings, sorted alphabetically, including citations in the abstract. Empty when there are no citations; uncited entries and ordinary cross-references are excluded. |
 | `keywords` | The supplied keywords, as a list. |
 | `license` | The SPDX license identifier, or null when none is given. |
 | `pages` | A record with `full` (all pages, including references) and `main` (excluding bibliography-only pages) counts. Null for HTML output. |

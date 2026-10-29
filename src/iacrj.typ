@@ -1164,13 +1164,27 @@
   // source files; record their names rather than exporting the combined data.
   meta.bibliography = args.bibliography
   meta.keywords = args.keywords
-  let abstract-text = args.abstract.text
+  meta.abstract = args.abstract.text
 
-  // Count physical pages, independently of page-counter resets.
-  let pages-through(marker) = {
-    let ends = query(metadata.where(value: marker))
-    // The template's boundary follows any matching markers in author content.
-    if ends.len() > 0 { ends.last().location().page() }
+  let context-meta() = {
+    // Count physical pages, independently of page-counter resets.
+    let pages-through(marker) = {
+      let ends = query(metadata.where(value: marker))
+      // The template's boundary follows any matching markers in author content.
+      if ends.len() > 0 { ends.last().location().page() }
+    }
+    (
+      meta
+        + (
+          citekeys: query(cite).map(it => str(it.key)).dedup().sorted(),
+          pages: if target() != "html" {
+            (
+              full: pages-through("iacrj-document-end"),
+              main: pages-through("iacrj-paper-end"),
+            )
+          },
+        )
+    )
   }
 
   let front-matter = title-block(
@@ -1220,19 +1234,7 @@
   }
   // The metadata for the publishing pipeline, queried from the command line:
   //   typst query main.typ '<iacrj-meta>' --field value --one
-  // HTML output has no pages.
-  context [#metadata(
-    meta
-      + (
-        pages: if target() != "html" {
-          (
-            full: pages-through("iacrj-document-end"),
-            main: pages-through("iacrj-paper-end"),
-          )
-        },
-        abstract: abstract-text,
-      ),
-  )<iacrj-meta>]
+  context [#metadata(context-meta())<iacrj-meta>]
   paper
   if args.bibliography.len() > 0 {
     std.bibliography(bibliography-source)
