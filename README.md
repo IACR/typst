@@ -129,6 +129,94 @@ The supplied filenames are recorded in the [paper's metadata](#paper-metadata).
 The source files and combined bibliography are not part of it; how the
 publishing pipeline retrieves those files is still unresolved.
 
+## Theorems and proofs
+
+The template provides the theorem environments from the LaTeX `iacrj` class,
+using **ctheorems 2.0.0**. Import the environments from the template; `iacrj`
+installs the required theorem, reference, and QED rules automatically. Do not
+add a separate `show: thm-rules` rule or import the package's default theme.
+
+```typ
+#import "iacrj.typ": iacrj, theorem, proof, example, qedhere
+#show: iacrj.with(
+  journal: "cic",
+  title: "Example paper",
+  authors: ("Alice",),
+)
+
+See @addition, including before its statement.
+
+#theorem[Addition][Adding zero to an integer leaves it unchanged.] <addition>
+#proof[of @addition][This follows from the additive identity.]
+
+#example[For instance, adding zero to seven gives seven.]
+
+#proof[
+  + Apply the identity.
+  + The desired equality follows. #qedhere
+]
+```
+
+The optional first content argument names a result: `#theorem[Name][Body]`.
+For an unnamed result, use `#theorem[Body]`. Attach a `<label>` after the
+environment and refer to it with `@label`; forward references work too.
+Proofs use `#proof[Body]` or `#proof[of @label][Body]`.
+
+| Environments | Heading | Body |
+| --- | --- | --- |
+| `theorem`, `proposition`, `problem`, `lemma`, `conjecture`, `corollary` | Bold | Italic |
+| `definition`, `example`, `exercise`, `property`, `question`, `solution` | Bold | Upright |
+| `remark`, `note`, `case` | Italic | Upright |
+| `claim` (unnumbered) | Bold | Italic |
+| `proof` (unnumbered) | Italic | Upright |
+
+Each numbered environment has its **own global counter**, starting at 1 and
+continuing across sections. For example, Theorem 1, Lemma 1, and Example 1
+can coexist; the next section's theorem is Theorem 2, not Theorem 2.1.
+Claims and proofs are unnumbered by default.
+
+Proofs end with a QED symbol automatically. To place it on the final display
+math line or list/numbered-list item instead, insert `#qedhere` there; this
+suppresses the additional end-of-proof symbol. For accessible display math,
+keep the alternative description on the equation:
+
+```typ
+#proof[
+  #math.equation(
+    block: true,
+    alt: "One plus one equals two.",
+    $1 + 1 = 2. #qedhere$,
+  )
+]
+```
+
+To repeat a theorem in an appendix and move its proof there, also import
+`thm-restate` from `iacrj.typ`. Mark the theorem with `restate: true` (visible
+both in the main body and appendix), and its proof with `defer: true` (visible
+only at the later `thm-restate()` call):
+
+```typ
+#import "iacrj.typ": thm-restate
+
+#theorem(restate: true)[Deferred result][The statement appears here.] <result>
+#proof([of @result], defer: true)[The proof appears only in the appendix.]
+
+// Other main-body material goes here.
+
+#heading(numbering: none)[Appendix: Deferred proofs]
+#thm-restate()
+```
+
+`thm-restate()` displays all previously marked environments in their original
+order, retaining the original theorem numbers without incrementing counters.
+Ordinary theorems and proofs are not repeated. Use an unnumbered appendix
+heading as above rather than overriding the template's heading numbering.
+
+Theorem and proof bodies can span pages. See `src/example.typ` for examples,
+`tests/theorems/test.typ` for counter, reference, QED, pagination, and
+equation-alternative-description regressions, and
+`tests/theorems-deferred/test.typ` for deferred proofs and restatements.
+
 ## Paper metadata
 
 The template places the paper's machine-readable metadata in the document as
@@ -311,6 +399,10 @@ typst compile --root . --pdf-standard ua-1,a-2a tests/accessibility/test.typ acc
 * The **[valkyrie](https://typst.app/universe/package/valkyrie)** package,
   which the template uses to check its arguments. Typst downloads it
   automatically the first time you compile, so there is nothing to install.
+* The **[ctheorems](https://typst.app/universe/package/ctheorems)** package,
+  version **2.0.0**, which supplies theorem environments, references, and proof
+  QED handling. Typst downloads it automatically; import the journal's
+  environments from `iacrj.typ`, not a ctheorems theme.
 * The **[ccicons](https://typst.app/universe/package/ccicons)** package,
   which provides the Creative Commons images in the first-page footer. It
   is downloaded the same way.

@@ -1,5 +1,6 @@
 #import "@preview/valkyrie:0.2.2" as z
 #import "@preview/ccicons:1.0.1": ccicon
+#import "@preview/ctheorems:2.0.0" as cth
 
 // Fonts. New Computer Modern is bundled with Typst; the sans and mono
 // variants (closest to Latin Modern Sans/Mono) must be installed.
@@ -69,6 +70,11 @@
   // \abovedisplayskip and \belowdisplayskip. No short-line or stretch/shrink
   // logic.
   equation: (above: 1em, below: 1em),
+
+  // amsthm: plain/definition use \topsep, remarks half of it; proofs use 6pt.
+  theorem: (above: 0.8em, below: 0.8em),
+  remark: (above: 0.4em, below: 0.4em),
+  proof: (above: 0.6em, below: 0.6em),
 
   // article.cls headings: \Large, \large and \normalsize bold, about 3.5ex
   // above and 2.3ex below. Typst's default sizes (1.4em, 1.2em, 1em) are
@@ -194,6 +200,41 @@
 
 /// The config of a journal: "cic", "tosc" or "tches".
 #let _journal-config(journal) = _merge(config, config-journal.at(journal))
+
+// Like iacrj.cls, each numbered environment has its own document-wide counter.
+#let _plain = cth.thm.with(
+  base: none,
+  numbering: "1",
+  block-args: config.theorem,
+)
+#let _definition = _plain.with(body-fmt: body => body)
+#let _remark = _definition.with(
+  title-fmt: emph,
+  separator: [. ],
+  block-args: config.remark,
+)
+
+#let theorem = _plain.with(supplement: "Theorem")
+#let proposition = _plain.with(supplement: "Proposition")
+#let problem = _plain.with(supplement: "Problem")
+#let lemma = _plain.with(supplement: "Lemma")
+#let conjecture = _plain.with(supplement: "Conjecture")
+#let corollary = _plain.with(supplement: "Corollary")
+#let claim = _plain.with(supplement: "Claim", numbering: none)
+
+#let definition = _definition.with(supplement: "Definition")
+#let example = _definition.with(supplement: "Example")
+#let exercise = _definition.with(supplement: "Exercise")
+#let property = _definition.with(supplement: "Property")
+#let question = _definition.with(supplement: "Question")
+#let solution = _definition.with(supplement: "Solution")
+
+#let remark = _remark.with(supplement: "Remark")
+#let note = _remark.with(supplement: "Note")
+#let case = _remark.with(supplement: "Case")
+#let proof = cth.proof.with(base: none, block-args: config.proof)
+#let qedhere = cth.qedhere
+#let thm-restate = cth.thm-state.thm-restate
 
 // Downloaded from https://info.orcid.org/documentation/integration-guide/orcid-id-display-guidelines/
 #let _orcid-icon = image.with(
@@ -1072,6 +1113,16 @@
     check(footnote.entry, config.footnote.entry, name: "footnote.entry")
     check(std.bibliography, config.bibliography)
     check(cite, config.cite)
+  }
+
+  show: cth.thm-rules.with(
+    qed-symbol: math.equation(alt: "End of proof", $square$),
+  )
+  // ctheorems rebuilds unnumbered equations for QED placement. Preserve their
+  // alternative descriptions through that reconstruction.
+  show math.equation: it => {
+    set math.equation(alt: it.alt)
+    it
   }
 
   set document(..config.document)

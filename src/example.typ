@@ -4,7 +4,7 @@
 //   typst compile --input version=final src/example.typ
 // For a final-version DOI/Crossmark header, the publisher also supplies the
 // `iacrmetadata` compiler input described in README.md, not template arguments.
-#import "iacrj.typ": iacrj
+#import "iacrj.typ": example, iacrj, proof, theorem, thm-restate
 
 // Keep this show rule at the top level: all following content must be inside
 // the template so its formatting, checks, and paper-length boundary apply.
@@ -135,6 +135,38 @@ quotation marks, and screen readers treat it correctly:
 English remains the default; a paper in another language can use
 `#set text(lang: "nl")`.
 
+== Theorems and proofs
+
+The template supplies theorem environments and their reference rules; no
+additional package import or show rule is needed. Each environment has its
+own counter, independent of section numbering.
+
+#theorem[Additive identity][
+  Adding zero to an integer leaves it unchanged.
+] <additive-identity>
+
+#proof[of @additive-identity][
+  Zero is the identity element for integer addition, so the assertion follows.
+]
+
+#example[
+  Adding zero to seven gives seven, as guaranteed by @additive-identity.
+]
+
+The proof above appears immediately after its theorem. In contrast, the proof
+of @even-sum is deferred to #link(<deferred-proofs>)[the appendix], where the
+theorem is repeated with its original number. The statement and proof are each written only once in
+the source.
+
+#theorem(restate: true)[Closure of even integers][
+  The sum of two even integers is even.
+] <even-sum>
+
+#proof([of @even-sum], defer: true)[
+  Each of the two integers is twice an integer. Their sum is therefore twice
+  the sum of those integers, and hence is even.
+]
+
 == Lists and code
 
 Use native lists for structured content:
@@ -212,3 +244,11 @@ bibliography-only pages. Both counts include front matter. A page shared by the
 main text and its references counts towards both totals. The BibTeX files
 themselves are not included; their delivery to the publisher is still to be
 determined.
+
+#pagebreak()
+#heading("Appendix: Deferred proofs", numbering: none) <deferred-proofs>
+
+The following statement retains its number from the main text and is followed
+by the proof that was deferred there.
+
+#thm-restate()
