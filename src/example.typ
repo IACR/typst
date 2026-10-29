@@ -11,8 +11,8 @@
 #show: iacrj.with(
   journal: sys.inputs.at("journal", default: "cic"), // also "tosc" or "tches"
   version: sys.inputs.at("version", default: "preprint"), // or "submission", "final"
-  // Set true only for submissions whose call for papers permits named authors.
-  notanonymous: false,
+  // Auto anonymizes submissions only. True/false override this in any version.
+  anonymous: auto,
   title: (
     full: "A Typst Template for IACR Journal Articles",
     short: "IACR Journal Template",
@@ -87,6 +87,9 @@ The default version is a preprint. With `--input version=submission`, the exampl
 hides names, affiliations, emails, ORCID links, and author notes from the front
 matter, running headers, PDF author metadata, and the queried metadata. Authors must
 still avoid identifying themselves in the paper's prose and abstract.
+The `anonymous` option defaults to `auto`, which anonymizes submissions only.
+Set it to `true` to anonymize any version, or `false` to show authors in any
+version; named submissions must be permitted by the call for papers.
 
 With `--input version=final`, publisher-supplied journal metadata controls the
 first-page publication header. CiC shows the DOI URL and, when a Crossmark date

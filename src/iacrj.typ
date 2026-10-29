@@ -800,7 +800,7 @@
   iacrmetadata: none,
   journal: none, // required: "cic", "tosc" or "tches"
   version: "preprint",
-  notanonymous: false,
+  anonymous: auto,
   line-numbers: auto,
   title: "",
   running: (:),
@@ -857,7 +857,7 @@
     (
       journal: journal,
       version: version,
-      notanonymous: notanonymous,
+      anonymous: anonymous,
       line-numbers: line-numbers,
       title: title,
       running: running,
@@ -883,10 +883,10 @@
         },
       ),
       // iacrj.cls's version= option. Only the final version gets the
-      // journal header on the first page; a submission is anonymous.
+      // journal header on the first page.
       version: z.choice(("preprint", "submission", "final")),
-      // iacrj.cls's notanonymous option: show the authors in a submission.
-      notanonymous: z.boolean(),
+      // Follow the version by default; booleans override it unconditionally.
+      anonymous: z.choice((auto, true, false), default: auto),
       // Number the lines, like lineno in iacrj.cls. `auto` (validated as
       // none) numbers them in submissions only.
       line-numbers: z.boolean(optional: true),
@@ -971,9 +971,17 @@
   let (full: full-title, short: short-title) = args.title
   let config = _journal-config(args.journal)
 
-  // A submission hides the authors and affiliations everywhere: title block,
-  // running head, PDF metadata and <iacrj-meta> (iacrj.cls's anonymous mode).
-  let anonymous = args.version == "submission" and not args.notanonymous
+  // Anonymity applies to the title block, running head, PDF metadata and
+  // <iacrj-meta>, regardless of the document version.
+  let anonymous = if args.anonymous == auto {
+    args.version == "submission"
+  } else { args.anonymous }
+  if anonymous {
+    // Discard identifying records before downstream rendering and metadata.
+    args.authors = ()
+    args.affiliations = (:)
+    args.running.authors = "Anonymous Submission to " + config.journal.name
+  }
   let line-numbers = if args.line-numbers == none {
     args.version == "submission"
   } else { args.line-numbers }
@@ -995,9 +1003,7 @@
     running-title: if args.running.title == auto { short-title } else {
       args.running.title
     },
-    running-authors: if anonymous {
-      "Anonymous Submission to " + config.journal.name
-    } else if args.running.authors == auto {
+    running-authors: if args.running.authors == auto {
       _running-authors(args.authors)
     } else { args.running.authors },
     version: args.version,
@@ -1139,8 +1145,8 @@
     volume: iacr.volume,
     issue: iacr.issue,
     title: (full: full-title, short: short-title),
-    authors: if anonymous { () } else { args.authors },
-    affiliations: if anonymous { (:) } else { args.affiliations },
+    authors: args.authors,
+    affiliations: args.affiliations,
     license: args.license,
   )
   if args.version == "final" {
@@ -1169,8 +1175,8 @@
 
   let front-matter = title-block(
     title: full-title,
-    authors: if anonymous { () } else { args.authors },
-    affiliations: if anonymous { (:) } else { args.affiliations },
+    authors: args.authors,
+    affiliations: args.affiliations,
     abstract: if args.abstract.text != "" { args.abstract.content },
     keywords: args.keywords,
   )

@@ -104,7 +104,7 @@
   (
     options: (
       version: "submission",
-      notanonymous: true,
+      anonymous: false,
       running: (authors: "RUNNING AUTHORS"),
     ),
     title: "Short Title",

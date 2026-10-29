@@ -55,8 +55,17 @@ omitted with a single author or a single affiliation.
 
 A string value such as `uni-a: "University A"` is shorthand for a record with
 only a `name`. Every referenced key must exist. Affiliation arrays and numeric
-`inst` references are no longer accepted. Anonymous submissions omit authors
+`inst` references are no longer accepted. Anonymous documents omit authors
 and affiliations from both the front matter and the queried metadata.
+
+The `anonymous` option controls anonymity:
+| Value | Behavior |
+| --- | --- |
+| `auto` (default) | Anonymous for `version: "submission"`; named otherwise. |
+| `true` | Anonymous in every version. |
+| `false` | Named in every version. |
+
+Named submissions must be permitted by the call for papers.
 
 ## Running headers
 
@@ -81,8 +90,8 @@ otherwise the last whitespace-separated word of the name is used. Supply
 A single author's name is never shortened.
 
 Running overrides do not change the title block or publishing metadata.
-Anonymous submissions ignore `running.authors` and retain the anonymous header;
-`notanonymous: true` permits the override.
+Anonymous documents ignore `running.authors` and retain the anonymous header;
+`anonymous: false` permits the override in any version.
 
 ## Bibliography
 
@@ -159,10 +168,10 @@ bibliography counts as a paper page. This uses physical page positions, not the
 page counter or displayed page numbers; without a bibliography it is the paper's
 total page count.
 
-Anonymous submissions have an empty author list and affiliation dictionary in
-the metadata; `notanonymous: true` disables that redaction. The abstract is
-preserved verbatim, so authors must remove identifying information from it and
-from the paper's prose themselves.
+Anonymous documents have an empty author list and affiliation dictionary in
+the metadata; `anonymous: false` disables that redaction in every version. The
+abstract is preserved verbatim, so authors must remove identifying information
+from it and from the paper's prose themselves.
 
 The metadata does **not** include the Typst source files, original BibTeX
 files, or concatenated bibliography data. Delivery of the referenced BibTeX
@@ -267,8 +276,9 @@ Without it, the DOI link is still rendered but the Crossmark badge is omitted.
 
 ## Submissions
 
-`version: "submission"` hides the authors (see above) and numbers the lines
-in the margin, as iacrj.cls does with lineno, so reviewers can refer to them.
+`version: "submission"` hides the authors by default (see `anonymous` above) and
+numbers the lines in the margin, as iacrj.cls does with lineno, so reviewers can
+refer to them. Anonymity overrides do not affect line numbering.
 The `line-numbers` option overrides this: `true` numbers the lines of any
 version, `false` turns them off. The default, `auto`, numbers submissions only.
 

@@ -127,24 +127,25 @@
   ),
 )
 
-// A submission hides the authors unless notanonymous is set.
+// Auto anonymizes submissions; false forces named authors.
 #iacrj(journal: "cic", version: "submission", title: "T", authors: ("Alice",))[
   #context assert.eq(document.author, ("hidden for submission",))
 ]
 #iacrj(
   journal: "cic",
   version: "submission",
-  notanonymous: true,
+  anonymous: false,
   title: "T",
   authors: ("Alice",),
 )[
   #context assert.eq(document.author, ("Alice",))
 ]
 #assert(
-  error(journal: "cic", notanonymous: "yes", title: "T", authors: (
+  error(journal: "cic", anonymous: "yes", title: "T", authors: (
     "A",
-  )).contains("iacrj.notanonymous"),
+  )).contains("iacrj.anonymous"),
 )
+
 
 // Volume and issue come from the publisher's iacrmetadata, never from the
 // document.
